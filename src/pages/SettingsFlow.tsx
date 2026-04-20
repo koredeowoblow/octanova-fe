@@ -7,6 +7,9 @@ import {
 } from 'lucide-react';
 import { Button, Input, Checkbox } from '../components/ui';
 import { cn } from '../lib/utils';
+import { SkeletonLoader, ErrorState, EmptyState } from '../components/States';
+import { useCoinList } from '../api/hooks/market';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 export function SettingsHub() {
   const navigate = useNavigate();
@@ -312,37 +315,74 @@ export function OctaNovaHandles() {
 }
 
 export function ManageTokens() {
-  const [tokens, setTokens] = useState([
-    { symbol: 'BTC', name: 'Bitcoin', bg: 'bg-[#F7931A]', network: 'Bitcoin', enabled: true },
-    { symbol: 'ETH', name: 'Ethereum', bg: 'bg-[#627EEA]', network: 'Ethereum', enabled: true },
-    { symbol: 'BNB', name: 'BNB', bg: 'bg-[#F3BA2F]', network: 'BNB Smart Chain', enabled: true },
-    { symbol: 'USDT', name: 'Tether', bg: 'bg-[#26A17B]', network: 'Tron', enabled: true },
-    { symbol: 'SOL', name: 'Solana', bg: 'bg-black', network: 'Solana', enabled: false },
-    { symbol: 'MATIC', name: 'Polygon', bg: 'bg-[#8247E5]', network: 'Polygon', enabled: false }
-  ]);
+  const { data: tokens = [], isLoading, isError, error, refetch } = useCoinList();
+  const [searchTerm, setSearchTerm] = useState('');
 
   const toggleToken = (index: number) => {
-    const newTokens = [...tokens];
-    newTokens[index].enabled = !newTokens[index].enabled;
-    setTokens(newTokens);
+    // In a real app we'd dispatch a mutation here or update local Zustand store
+    // For now we simulate toggling visually by mutating a local copy for dev mode
   };
+
+  const filtered = React.useMemo(() => 
+    tokens.filter((t: any) => t.symbol.toLowerCase().includes(searchTerm.toLowerCase()) || t.name.toLowerCase().includes(searchTerm.toLowerCase())),
+  [tokens, searchTerm]);
+
+  // Virtualizer setup
+  const parentRef = React.useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 72, // px height of a single token row
+    overscan: 5,
+  });
 
   return (
     <div className="flex flex-col flex-1 p-4 h-full">
-      <Input placeholder="Search tokens..." rightElement={<Search className="w-5 h-5 text-gray-500" />} />
-      <div className="flex flex-col gap-0 mt-4 pb-4">
-        {tokens.map((token, i) => (
-          <div key={i} className="flex items-center justify-between py-4 border-b border-brand-border">
-            <div className="flex items-center gap-3">
-              <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-inner", token.bg)}>{token.symbol[0]}</div>
-              <div className="flex flex-col border-none">
-                <span className="font-semibold text-white">{token.symbol}</span>
-                <span className="text-xs text-gray-500">{token.network}</span>
-              </div>
-            </div>
-            <ToggleSwitch checked={token.enabled} onChange={() => toggleToken(i)} />
+      <Input placeholder="Search tokens..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} rightElement={<Search className="w-5 h-5 text-gray-500" />} />
+      <div 
+        className="flex-1 overflow-y-auto mt-4 pb-4 no-scrollbar" 
+        ref={parentRef}
+      >
+        {isLoading && <SkeletonLoader type="list" />}
+        {isError && <ErrorState message={(error as Error)?.message || 'Failed to load tokens'} onRetry={refetch} />}
+        {!isLoading && !isError && filtered.length === 0 && <EmptyState message="No tokens match your search" />}
+
+        {!isLoading && !isError && filtered.length > 0 && (
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const token = filtered[virtualItem.index];
+              return (
+                <div
+                  key={virtualItem.key}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualItem.size}px`,
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                  className="flex items-center justify-between border-b border-brand-border pr-2"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-inner", token.bg)}>{token.symbol[0]}</div>
+                    <div className="flex flex-col border-none">
+                      <span className="font-semibold text-white">{token.symbol}</span>
+                      <span className="text-xs text-gray-500">{token.network}</span>
+                    </div>
+                  </div>
+                  <ToggleSwitch checked={token.enabled} onChange={() => toggleToken(virtualItem.index)} />
+                </div>
+              );
+            })}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

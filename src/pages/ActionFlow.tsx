@@ -4,26 +4,29 @@ import { ArrowDownLeft, ArrowUpRight, Copy, CheckCircle2, QrCode, Search, Scan, 
 import { Button, Input } from '../components/ui';
 import { Numpad } from '../components/Numpad';
 import { cn, truncateAddress } from '../lib/utils';
+import { SkeletonLoader, ErrorState, EmptyState } from '../components/States';
+import { useCoinList } from '../api/hooks/market';
+import { useTransactionHistory } from '../api/hooks/wallet';
 
 export function ReceiveSelectCoin() {
   const navigate = useNavigate();
-  const tokens = [
-    { symbol: 'BTC', name: 'Bitcoin', bg: 'bg-[#F7931A]', network: 'Bitcoin' },
-    { symbol: 'ETH', name: 'Ethereum', bg: 'bg-[#627EEA]', network: 'Ethereum' },
-    { symbol: 'USDT', name: 'Tether', bg: 'bg-[#26A17B]', network: 'Tron' },
-    { symbol: 'BNB', name: 'BNB', bg: 'bg-[#F3BA2F]', network: 'BNB Smart Chain' },
-    { symbol: 'SOL', name: 'Solana', bg: 'bg-black', network: 'Solana' },
-    { symbol: 'MATIC', name: 'Polygon', bg: 'bg-[#8247E5]', network: 'Polygon' }
-  ];
+  const { data: tokens = [], isLoading, isError, error, refetch } = useCoinList();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filtered = tokens.filter((t: any) => t.symbol.toLowerCase().includes(searchTerm.toLowerCase()) || t.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="flex flex-col flex-1 pb-4">
       <div className="px-4 py-2 mt-2">
-        <Input placeholder="Search coin to receive" rightElement={<Search className="w-5 h-5" />} />
+        <Input placeholder="Search coin to receive" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} rightElement={<Search className="w-5 h-5" />} />
       </div>
       <div className="mt-4 flex flex-col">
-        {tokens.map((token, i) => (
-          <div key={i} onClick={() => navigate('/receive/qr', { state: { token } })} className="flex items-center gap-3 py-4 px-4 border-b border-brand-border cursor-pointer hover:bg-brand-card/50 transition-colors">
+        {isLoading && <SkeletonLoader type="list" className="px-4" />}
+        {isError && <ErrorState message={(error as Error)?.message || 'Failed to load tokens'} onRetry={refetch} />}
+        {!isLoading && !isError && filtered.length === 0 && <EmptyState message="No coins match your search" />}
+
+        {!isLoading && !isError && filtered.map((token: any, i: number) => (
+          <div key={token.id || i} onClick={() => navigate('/receive/qr', { state: { token } })} className="flex items-center gap-3 py-4 px-4 border-b border-brand-border cursor-pointer hover:bg-brand-card/50 transition-colors">
             <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-inner", token.bg)}>{token.symbol[0]}</div>
             <div className="flex flex-col">
               <span className="font-semibold">{token.name} ({token.symbol})</span>
@@ -83,20 +86,23 @@ export function ReceiveQR() {
 
 export function SendSelectCoin() {
   const navigate = useNavigate();
-  const tokens = [
-    { symbol: 'BTC', name: 'Bitcoin', bg: 'bg-[#F7931A]', network: 'Bitcoin', balance: '0.045', value: '$2,450.00' },
-    { symbol: 'ETH', name: 'Ethereum', bg: 'bg-[#627EEA]', network: 'Ethereum', balance: '1.45', value: '$4,132.50' },
-    { symbol: 'USDT', name: 'Tether', bg: 'bg-[#26A17B]', network: 'Tron', balance: '150.00', value: '$150.00' },
-  ];
+  const { data: tokens = [], isLoading, isError, error, refetch } = useCoinList();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filtered = tokens.filter((t: any) => t.symbol.toLowerCase().includes(searchTerm.toLowerCase()) || t.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="flex flex-col flex-1 pb-4">
       <div className="px-4 py-2 mt-2">
-        <Input placeholder="Search coin" rightElement={<Search className="w-5 h-5" />} />
+        <Input placeholder="Search coin" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} rightElement={<Search className="w-5 h-5" />} />
       </div>
       <div className="mt-4 flex flex-col">
-        {tokens.map((token, i) => (
-          <div key={i} onClick={() => navigate('/send/address')} className="flex items-center justify-between py-4 px-4 border-b border-brand-border cursor-pointer hover:bg-brand-card/50 transition-colors">
+        {isLoading && <SkeletonLoader type="list" className="px-4" />}
+        {isError && <ErrorState message={(error as Error)?.message || 'Failed to load tokens'} onRetry={refetch} />}
+        {!isLoading && !isError && filtered.length === 0 && <EmptyState message="No coins match your search" />}
+
+        {!isLoading && !isError && filtered.map((token: any, i: number) => (
+          <div key={token.id || i} onClick={() => navigate('/send/address')} className="flex items-center justify-between py-4 px-4 border-b border-brand-border cursor-pointer hover:bg-brand-card/50 transition-colors">
             <div className="flex items-center gap-3">
               <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-inner", token.bg)}>{token.symbol[0]}</div>
               <div className="flex flex-col">
@@ -298,17 +304,13 @@ export function SendStatus({ status }: { status: 'success'|'failed' }) {
 
 export function Swap() {
   const navigate = useNavigate();
+  const { data: tokens = [], isLoading, isError, error, refetch } = useCoinList();
+  
   const [fromToken, setFromToken] = useState({ symbol: 'ETH', name: 'Ethereum', bg: 'bg-[#627EEA]', balance: '1.45', rate: 2845.50 });
   const [toToken, setToToken] = useState({ symbol: 'USDT', name: 'Tether', bg: 'bg-[#26A17B]', balance: '150.00', rate: 1.0 });
   const [fromAmount, setFromAmount] = useState('');
   const [showSelector, setShowSelector] = useState<'from' | 'to' | null>(null);
-
-  const tokens = [
-    { symbol: 'ETH', name: 'Ethereum', bg: 'bg-[#627EEA]', balance: '1.45', rate: 2845.50 },
-    { symbol: 'USDT', name: 'Tether', bg: 'bg-[#26A17B]', balance: '150.00', rate: 1.0 },
-    { symbol: 'BTC', name: 'Bitcoin', bg: 'bg-[#F7931A]', balance: '0.045', rate: 64000.00 },
-    { symbol: 'BNB', name: 'BNB', bg: 'bg-[#F3BA2F]', balance: '2.5', rate: 320.00 }
-  ];
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleTokenSelect = (token: any) => {
     if (showSelector === 'from') {
@@ -334,6 +336,8 @@ export function Swap() {
 
   const toAmount = fromAmount ? (parseFloat(fromAmount) * fromToken.rate / toToken.rate).toFixed(6).replace(/\.?0+$/, '') : '';
 
+  const filtered = tokens.filter((t: any) => t.symbol.toLowerCase().includes(searchTerm.toLowerCase()) || t.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
   if (showSelector) {
     return (
       <div className="absolute inset-0 z-50 bg-brand-bg flex flex-col">
@@ -346,10 +350,14 @@ export function Swap() {
         </div>
         {/* Token List */}
         <div className="flex-1 overflow-y-auto px-4 py-4 pt-4 relative">
-           <Input placeholder="Search tokens..." rightElement={<Search className="w-5 h-5 text-gray-500" />} />
-           <div className="flex flex-col mt-4 pb-12">
-             {tokens.map((token, i) => (
-               <div key={i} onClick={() => handleTokenSelect(token)} className="flex items-center justify-between py-4 border-b border-brand-border cursor-pointer hover:bg-brand-card/50">
+           <Input placeholder="Search tokens..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} rightElement={<Search className="w-5 h-5 text-gray-500" />} />
+           <div className="flex flex-col mt-4 pb-12 gap-1">
+             {isLoading && <SkeletonLoader type="list" />}
+             {isError && <ErrorState message={(error as Error)?.message || 'Failed to load'} onRetry={refetch} />}
+             {!isLoading && !isError && filtered.length === 0 && <EmptyState message="No coins found" />}
+             
+             {!isLoading && !isError && filtered.map((token: any, i: number) => (
+               <div key={token.id || i} onClick={() => handleTokenSelect(token)} className="flex items-center justify-between py-4 border-b border-brand-border cursor-pointer hover:bg-brand-card/50">
                  <div className="flex items-center gap-3">
                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-inner", token.bg)}>{token.symbol[0]}</div>
                    <div className="flex flex-col">
@@ -514,24 +522,73 @@ export function SwapStatus({ status }: { status: 'success'|'failed' }) {
   );
 }
 
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  flexRender,
+  createColumnHelper,
+} from '@tanstack/react-table';
+
 export function History() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('All');
   const filters = ['All', 'Receive', 'Send', 'Swap'];
 
-  const txs = [
-    { id: 'tx-1', type: 'Receive', asset: 'BTC', amount: '+0.05 BTC', fiat: '+$3,450.00', date: 'Today, 14:30', status: 'Completed', incoming: true },
-    { id: 'tx-2', type: 'Send', asset: 'USDT', amount: '-150.00 USDT', fiat: '-$150.00', date: 'Yesterday, 09:12', status: 'Pending', incoming: false },
-    { id: 'tx-3', type: 'Swap', asset: 'ETH → USDT', amount: '1.2 ETH', fiat: '', date: 'Mar 12, 18:45', status: 'Completed', incoming: false },
-    { id: 'tx-4', type: 'Receive', asset: 'ETH', amount: '+0.45 ETH', fiat: '+$1,280.00', date: 'Mar 10, 11:20', status: 'Failed', incoming: true },
-  ];
+  const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useTransactionHistory('mock-address');
+  const txs = data?.pages.flatMap(page => page.items) ?? [];
 
-  const filteredTxs = filter === 'All' ? txs : txs.filter(t => t.type === filter);
+  const columnHelper = createColumnHelper<any>();
+
+  const columns = React.useMemo(
+    () => [
+      columnHelper.accessor('type', {
+        header: 'Type',
+        filterFn: 'equalsString',
+      }),
+      columnHelper.accessor('asset', { header: 'Asset' }),
+      columnHelper.accessor('amount', { header: 'Amount' }),
+      columnHelper.accessor('status', { header: 'Status' }),
+      columnHelper.accessor('fiat', { header: 'Fiat' }),
+      columnHelper.accessor('date', { header: 'Date' }),
+      columnHelper.accessor('incoming', { header: 'Incoming' })
+    ],
+    [columnHelper]
+  );
+
+  const table = useReactTable({
+    data: txs,
+    columns,
+    state: {
+      globalFilter: filter === 'All' ? '' : filter,
+    },
+    onGlobalFilterChange: setFilter,
+    globalFilterFn: (row, columnId, filterValue) => {
+      return row.getValue('type') === filterValue;
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
+  // Auto-fetch Intersection Observer
+  const observerRef = React.useRef<IntersectionObserver | null>(null);
+  const lastElementRef = React.useCallback((node: HTMLDivElement | null) => {
+    if (isLoading || isFetchingNextPage) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasNextPage) {
+        fetchNextPage();
+      }
+    });
+    if (node) observerRef.current.observe(node);
+  }, [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
+
+  const rows = table.getRowModel().rows;
 
   return (
     <div className="flex flex-col flex-1 h-full">
       {/* Filters */}
-      <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto no-scrollbar border-b border-brand-border">
+      <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto no-scrollbar border-b border-brand-border shrink-0">
         {filters.map(f => (
           <button 
             key={f} 
@@ -546,40 +603,56 @@ export function History() {
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 pt-4 flex flex-col gap-4">
-        {filteredTxs.map((tx) => (
-          <div key={tx.id} onClick={() => navigate(`/history/${tx.id}`)} className="bg-brand-card border border-brand-border rounded-2xl p-4 flex flex-col gap-3 cursor-pointer hover:bg-brand-border-visible transition-colors">
-            <div className="flex justify-between items-start w-full">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-brand-input flex items-center justify-center text-white shrink-0">
-                  {tx.type === 'Swap' ? <RefreshCw className="w-5 h-5 text-brand-primary" /> : tx.incoming ? <ArrowDownLeft className="text-brand-success w-5 h-5" /> : <ArrowUpRight className="text-gray-400 w-5 h-5" />}
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-semibold text-sm">{tx.type} {tx.asset}</span>
-                  <span className="text-[11px] text-gray-500">{tx.date}</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className={`font-bold text-sm ${tx.incoming ? 'text-brand-success' : 'text-white'}`}>{tx.amount}</span>
-                {tx.fiat && <span className="text-[11px] text-gray-500">{tx.fiat}</span>}
-              </div>
-            </div>
-            {/* Status indicator injected inside row */}
-            <div className="flex items-center justify-end">
-               <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full border", 
-                 tx.status === 'Completed' ? "bg-brand-success/10 text-brand-success border-brand-success/20" :
-                 tx.status === 'Pending' ? "bg-brand-warning/10 text-brand-warning border-brand-warning/20" :
-                 "bg-brand-error/10 text-brand-error border-brand-error/20"
-               )}>
-                 {tx.status}
-               </span>
-            </div>
-          </div>
-        ))}
+      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+        {isLoading && <SkeletonLoader type="list" />}
+        {isError && <ErrorState message={(error as Error)?.message || 'Failed to fetch history'} onRetry={refetch} />}
 
-        {filteredTxs.length === 0 && (
-          <div className="text-center py-10 text-gray-400 text-sm">
-            No transactions found for this filter.
+        {!isLoading && !isError && rows.map((row, index) => {
+          const isLastElement = index === rows.length - 1;
+          const tx = row.original;
+          
+          return (
+            <div 
+              key={tx.id} 
+              ref={isLastElement ? lastElementRef : null}
+              onClick={() => navigate(`/history/${tx.id}`)} 
+              className="bg-brand-card border border-brand-border rounded-2xl p-4 flex flex-col gap-3 cursor-pointer hover:bg-brand-border-visible transition-colors"
+            >
+              <div className="flex justify-between items-start w-full">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-brand-input flex items-center justify-center text-white shrink-0">
+                    {tx.type === 'Swap' ? <RefreshCw className="w-5 h-5 text-brand-primary" /> : tx.incoming ? <ArrowDownLeft className="text-brand-success w-5 h-5" /> : <ArrowUpRight className="text-gray-400 w-5 h-5" />}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-sm">{tx.type} {tx.asset}</span>
+                    <span className="text-[11px] text-gray-500">{tx.date}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className={`font-bold text-sm ${tx.incoming ? 'text-brand-success' : 'text-white'}`}>{tx.amount}</span>
+                  {tx.fiat && <span className="text-[11px] text-gray-500">{tx.fiat}</span>}
+                </div>
+              </div>
+              <div className="flex items-center justify-end">
+                <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full border", 
+                  tx.status === 'Completed' ? "bg-brand-success/10 text-brand-success border-brand-success/20" :
+                  tx.status === 'Pending' ? "bg-brand-warning/10 text-brand-warning border-brand-warning/20" :
+                  "bg-brand-error/10 text-brand-error border-brand-error/20"
+                )}>
+                  {tx.status}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+
+        {!isLoading && !isError && rows.length === 0 && (
+          <EmptyState message={`No ${filter === 'All' ? '' : filter} transactions found.`} />
+        )}
+        
+        {isFetchingNextPage && (
+          <div className="flex justify-center p-4">
+            <RefreshCw className="w-5 h-5 text-brand-primary animate-spin" />
           </div>
         )}
       </div>

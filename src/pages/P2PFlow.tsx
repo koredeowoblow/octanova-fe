@@ -1,18 +1,31 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Filter, ChevronDown, CheckCircle2, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Filter, ChevronDown, CheckCircle2, MessageCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button, Input, OTPInput } from '../components/ui';
 import { BottomSheet } from '../components/BottomSheet';
+import { SkeletonLoader, ErrorState, EmptyState } from '../components/States';
+import { useP2PListings } from '../api/hooks/p2p';
 
 export function P2P() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<'buy'|'sell'>('buy');
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const sellers = [
-    { name: "Slickbee", trades: 310, completion: "98.5%", price: "139,247,858", qty: "0.0001 - 0.05", bank: "Bank Transfer" },
-    { name: "OctaTrader", trades: 1450, completion: "100%", price: "139,500,000", qty: "0.01 - 2.5", bank: "Bank Transfer" }
-  ];
+  const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useP2PListings({ type: tab });
+  const sellers = data?.pages.flatMap(page => page.items) ?? [];
+
+  // Auto-fetch Intersection Observer
+  const observerRef = React.useRef<IntersectionObserver | null>(null);
+  const lastElementRef = React.useCallback((node: HTMLDivElement | null) => {
+    if (isLoading || isFetchingNextPage) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasNextPage) {
+        fetchNextPage();
+      }
+    });
+    if (node) observerRef.current.observe(node);
+  }, [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
 
   return (
     <div className="flex flex-col flex-1 h-full">
@@ -29,7 +42,7 @@ export function P2P() {
       </header>
 
       {/* Filters Row */}
-      <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto no-scrollbar border-b border-brand-border">
+      <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto no-scrollbar border-b border-brand-border shrink-0">
         <FilterPill label="BTC" />
         <FilterPill label="Amount" onClick={() => setFilterOpen(true)} />
         <FilterPill label="Payment Method" />
@@ -37,8 +50,21 @@ export function P2P() {
 
       {/* Seller List */}
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
-        {sellers.map((s, i) => (
-          <div key={i} className="bg-brand-card border border-brand-border rounded-2xl p-4 flex flex-col gap-3">
+        {isLoading && <SkeletonLoader type="list" />}
+        {isError && <ErrorState message={(error as Error)?.message || 'Failed to load offers'} onRetry={refetch} />}
+        
+        {!isLoading && !isError && sellers.length === 0 && (
+          <EmptyState message={`No ${tab} offers found matching your filters.`} />
+        )}
+
+        {!isLoading && !isError && sellers.map((s: any, i: number) => {
+          const isLastElement = i === sellers.length - 1;
+          return (
+          <div 
+            key={s.id || i} 
+            ref={isLastElement ? lastElementRef : null}
+            className="bg-brand-card border border-brand-border rounded-2xl p-4 flex flex-col gap-3"
+          >
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-primary to-pink-500 flex items-center justify-center font-bold text-xs">{s.name[0]}</div>
@@ -58,10 +84,17 @@ export function P2P() {
                 <span className="font-bold text-xl text-white">₦{s.price}</span>
                 <span className="text-gray-500 text-[11px] mt-1">Limit: {s.qty} BTC</span>
               </div>
-              <Button size="sm" className="w-[100px]" onClick={() => navigate('/p2p/buy')}>Buy</Button>
+              <Button size="sm" className={tab === 'sell' ? "bg-brand-error border-transparent hover:bg-red-600 w-[100px]" : "w-[100px]"} onClick={() => navigate(tab === 'buy' ? '/p2p/buy' : '/p2p/sell')}>
+                {tab === 'buy' ? 'Buy' : 'Sell'}
+              </Button>
             </div>
           </div>
-        ))}
+        )})}
+        {isFetchingNextPage && (
+          <div className="flex justify-center p-4">
+            <Loader2 className="w-5 h-5 text-brand-primary animate-spin" />
+          </div>
+        )}
       </div>
 
       <BottomSheet isOpen={filterOpen} onClose={() => setFilterOpen(false)} title="Select Limit">

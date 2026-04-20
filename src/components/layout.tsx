@@ -2,12 +2,22 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Home, ShoppingBag, Megaphone, User } from "lucide-react";
 import { cn } from "../lib/utils";
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../api/queryKeys';
+import { mockApi } from '../api/mockApi';
 
 /** Base App Wrapper containing the mobile constraint and transition intercepts */
 export function AppWrapper() {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Prefetch critical paths on boot
+    queryClient.prefetchQuery({ queryKey: queryKeys.market.coins(), queryFn: mockApi.getMarketCoins, staleTime: 30000 });
+    // KYC and Balances prefetch simulates
+  }, []);
 
   useEffect(() => {
     // Intercept Route Changes
@@ -90,6 +100,7 @@ export function MainLayout() {
 }
 
 export function BottomNavBar() {
+  const queryClient = useQueryClient();
   const nav = [
     { label: "Home", path: "/home", icon: Home },
     { label: "Orders", path: "/orders", icon: ShoppingBag },
@@ -98,13 +109,29 @@ export function BottomNavBar() {
   ];
   const { pathname } = useLocation();
 
+  const handleMouseEnter = (path: string) => {
+    if (path === '/p2p') {
+      queryClient.prefetchInfiniteQuery({
+        queryKey: queryKeys.p2p.listings({ type: 'buy' }),
+        queryFn: ({ pageParam = 1 }) => mockApi.getP2PListings({ type: 'buy', page: pageParam }),
+        initialPageParam: 1,
+        staleTime: 15 * 1000
+      });
+    }
+  };
+
   return (
     <div className="absolute bottom-0 left-0 w-full h-[80px] bg-[#0d0d0d] border-t border-brand-border flex items-center justify-around px-2 z-50">
       {nav.map((item) => {
         const isActive = pathname.startsWith(item.path);
         const Icon = item.icon;
         return (
-          <Link key={item.path} to={item.path} className="flex flex-col items-center justify-center p-2 gap-1 relative w-16">
+          <Link 
+            key={item.path} 
+            to={item.path} 
+            onMouseEnter={() => handleMouseEnter(item.path)}
+            className="flex flex-col items-center justify-center p-2 gap-1 relative w-16"
+          >
             <Icon className={cn("w-6 h-6", isActive ? "text-brand-primary" : "text-gray-500")} strokeWidth={isActive ? 2.5 : 2} />
             <span className={cn("text-[10px] font-medium", isActive ? "text-brand-primary" : "text-gray-500")}>
               {item.label}

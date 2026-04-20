@@ -14,9 +14,9 @@ const SecurityContext = createContext<SecurityContextType | undefined>(undefined
 export function SecurityProvider({ children }: { children: React.ReactNode }) {
   const [isLocked, setIsLocked] = useState(false);
   const [password, setPassword] = useState('');
-  const [errorTimer, setErrorTimer] = useState<NodeJS.Timeout | null>(null);
+  const [errorTimer, setErrorTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 

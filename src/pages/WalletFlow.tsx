@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Copy, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { Button } from '../components/ui';
+import { cn } from '../lib/utils';
 
 export function CreateWalletPassword() {
   const navigate = useNavigate();

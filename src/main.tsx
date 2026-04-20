@@ -4,8 +4,26 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppWrapper, FlowLayout, MainLayout } from './components/layout';
 import React, { Suspense, lazy } from 'react';
 import { SecurityProvider } from './components/SecurityProvider';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import './index.css';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000,          // 30 seconds
+      gcTime: 5 * 60 * 1000,         // 5 minutes
+      retry: 2,
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
 
 // Lazy loader helper ensuring clean syntax mappings
 const load = (resolver: () => Promise<any>, name: string) => lazy(() => resolver().then(m => ({ default: m[name] })));
@@ -78,10 +96,11 @@ const BankTransferSuccess = load(bankLoad, 'BankTransferSuccess');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <SecurityProvider>
-        <Routes>
-          <Route element={<AppWrapper />}>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <SecurityProvider>
+          <Routes>
+            <Route element={<AppWrapper />}>
             
             {/* Index Redirect */}
           <Route path="/" element={<Navigate to="/signup/welcome" />} />
@@ -163,5 +182,7 @@ createRoot(document.getElementById('root')!).render(
         </Routes>
       </SecurityProvider>
     </BrowserRouter>
+    {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
   </StrictMode>,
 );
