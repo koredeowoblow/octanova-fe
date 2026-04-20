@@ -16,6 +16,11 @@
 
   --font-sans: "Inter", "SF Pro Display", "-apple-system", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+
+  @keyframes scan {
+    0%, 100% { top: 0; }
+    50% { top: 100%; }
+  }
 }
 
 body {

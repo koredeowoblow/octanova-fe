@@ -25,7 +25,7 @@ export function Home() {
           <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
         </div>
         <div className="flex items-center gap-3">
-          <Link to="/alerts" className="p-2 bg-brand-card hover:bg-brand-border rounded-full"><Bell className="w-5 h-5 text-white" /></Link>
+          <Link to="/notifications" className="p-2 bg-brand-card hover:bg-brand-border rounded-full"><Bell className="w-5 h-5 text-white" /></Link>
           <button className="p-2 bg-brand-card hover:bg-brand-border rounded-full"><Scan className="w-5 h-5 text-white" /></button>
         </div>
       </header>

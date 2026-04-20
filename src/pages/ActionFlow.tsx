@@ -69,6 +69,29 @@ export function SendSelectCoin() {
 export function SendAddress() {
   const navigate = useNavigate();
   const [address, setAddress] = useState('');
+  const [showQR, setShowQR] = useState(false);
+
+  if (showQR) {
+    return (
+      <div className="flex flex-col flex-1 p-6 h-full bg-black relative">
+        <div className="absolute top-4 left-4 z-10">
+          <button onClick={() => setShowQR(false)} className="p-2 bg-brand-card rounded-full text-white">
+            <XCircle className="w-6 h-6" />
+          </button>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="w-64 h-64 border-2 border-brand-primary rounded-3xl relative flex items-center justify-center mb-8">
+            {/* Scan animation line */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-brand-primary shadow-[0_0_10px_#7C3AED] animate-[scan_2s_ease-in-out_infinite]"></div>
+            <p className="text-brand-primary font-medium animate-pulse">Camera active...</p>
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Scan QR Code</h2>
+          <p className="text-gray-400 text-sm text-center">Align the QR code within the frame to scan the recipient address.</p>
+        </div>
+        <Button onClick={() => { setAddress('0x4F9...A1B2'); setShowQR(false); }} className="mt-8">Simulate Successful Scan</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1 p-6 h-full">
@@ -81,7 +104,7 @@ export function SendAddress() {
             onChange={(e) => setAddress(e.target.value)}
             rightElement={
               <div className="flex gap-2">
-                <ScanIcon className="button w-5 h-5 text-brand-primary cursor-pointer" />
+                <ScanIcon onClick={() => setShowQR(true)} className="button w-5 h-5 text-brand-primary cursor-pointer hover:opacity-80" />
               </div>
             }
           />
@@ -112,7 +135,7 @@ export function SendAmount() {
 
         <div className="flex flex-col gap-2 items-center justify-center py-8">
           <span className="text-5xl font-bold tracking-tight text-white">${amount || '0'}</span>
-          <span className="text-brand-primary text-sm font-medium mt-2 bg-brand-primary/10 px-3 py-1 rounded-full cursor-pointer">Max</span>
+          <button onClick={() => setAmount('1240.50')} className="text-brand-primary text-sm font-medium mt-2 bg-brand-primary/10 px-3 py-1 rounded-full cursor-pointer hover:bg-brand-primary/20 transition-colors">Max</button>
         </div>
       </div>
 
@@ -157,8 +180,9 @@ export function SendConfirm() {
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8 flex flex-col gap-3">
         <Button onClick={() => navigate('/send/loading')}>Confirm Send</Button>
+        <Button variant="ghost" onClick={() => navigate('/send/failed')} className="text-gray-500 hover:text-brand-error">Simulate Failure</Button>
       </div>
     </div>
   );

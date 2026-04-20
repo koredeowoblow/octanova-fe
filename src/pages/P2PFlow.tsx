@@ -125,3 +125,38 @@ export function P2PBuy() {
     </div>
   );
 }
+
+export function P2PSell() {
+  const navigate = useNavigate();
+  return (
+    <div className="flex flex-col flex-1 p-4 h-full relative">
+      <div className="bg-brand-error/10 border border-brand-error/30 text-brand-error rounded-xl p-3 text-sm mb-6 flex gap-2">
+        <span>Carefully verify payment before releasing assets</span>
+      </div>
+
+      <div className="flex justify-between items-center mb-6">
+        <span className="text-gray-400 text-sm">Rate</span>
+        <span className="font-bold">139,247,858 NGN</span>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <Input label="You sell" placeholder="0.000071" rightElement={<span className="text-white font-bold text-sm">BTC</span>} />
+        <Input label="You receive" placeholder="10,000" rightElement={<span className="text-brand-success font-bold text-sm">NGN</span>} />
+        
+        <div className="flex flex-col gap-1.5 mt-2">
+          <label className="text-sm font-medium text-gray-300">Select receiving account</label>
+          <div className="w-full bg-brand-input border border-brand-border rounded-xl px-4 py-4 flex justify-between items-center">
+            <span>Guaranty Trust Bank - **449</span>
+            <ChevronDown className="w-4 h-4" />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 mb-auto">
+        <Link to="/p2p/seller" className="text-sm text-brand-primary flex items-center gap-1">Get more details about buyer <ChevronDown className="w-4 h-4 -rotate-90" /></Link>
+      </div>
+
+      <Button className="mt-auto bg-brand-error hover:bg-brand-error border-brand-error" onClick={() => navigate('/p2p/transaction')}>Sell BTC with 0 fees</Button>
+    </div>
+  );
+}

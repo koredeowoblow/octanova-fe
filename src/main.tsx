@@ -6,9 +6,14 @@ import { AppWrapper, FlowLayout, MainLayout } from './components/layout';
 /* Flows */
 import { SigninSignupWelcome, Signup, ConfirmEmail, EmailVerified, CreatePassword, WelcomeAboard, Login, LoginPassword } from './pages/AuthFlow';
 import { Home, Deposit } from './pages/Home';
-import { P2P, P2PBuy } from './pages/P2PFlow';
+import { P2P, P2PBuy, P2PSell } from './pages/P2PFlow';
 import { CreateWalletPassword, CreateWalletSeed, WalletLoading } from './pages/WalletFlow';
 import { Receive, SendSelectCoin, SendAddress, SendAmount, SendConfirm, SendLoading, SendStatus, Swap, History, TransactionDetail } from './pages/ActionFlow';
+import { Notifications } from './pages/Notifications';
+import { 
+  SettingsHub, AddressBook, AddressBookAdd, Preferences, 
+  Security, DAppConnection, OctaNovaHandles 
+} from './pages/SettingsFlow';
 
 import './index.css';
 
@@ -37,12 +42,28 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/home" element={<Home />} />
             <Route path="/p2p" element={<P2P />} />
             <Route path="/orders" element={<div className="p-4 text-gray-400 text-center mt-20">Orders Coming Soon</div>} />
-            <Route path="/settings" element={<div className="p-4 text-gray-400 text-center mt-20">Settings Coming Soon</div>} />
+            <Route path="/settings" element={<SettingsHub />} />
           </Route>
 
           {/* Sub Flows with Top Nav only */}
           <Route path="/deposit" element={<FlowLayout title="Deposit"><Deposit /></FlowLayout>} />
           <Route path="/p2p/buy" element={<FlowLayout title="Buy BTC"><P2PBuy /></FlowLayout>} />
+          <Route path="/p2p/sell" element={<FlowLayout title="Sell BTC"><P2PSell /></FlowLayout>} />
+          <Route path="/p2p/transaction" element={
+            <div className="flex flex-col items-center justify-center h-[100dvh]">
+              <p>Transaction View Coming Soon</p>
+              <button onClick={() => window.history.back()} className="mt-4 px-4 py-2 bg-brand-primary rounded-xl">Go Back</button>
+            </div>
+          } />
+
+          <Route path="/settings/address-book" element={<FlowLayout title="Address Book"><AddressBook /></FlowLayout>} />
+          <Route path="/settings/address-book/add" element={<FlowLayout title="Add Address"><AddressBookAdd /></FlowLayout>} />
+          <Route path="/settings/preferences" element={<FlowLayout title="Preferences"><Preferences /></FlowLayout>} />
+          <Route path="/settings/security" element={<FlowLayout title="Security"><Security /></FlowLayout>} />
+          <Route path="/settings/dapps" element={<FlowLayout title="Connected DApps"><DAppConnection /></FlowLayout>} />
+          <Route path="/settings/handles" element={<FlowLayout title="OctaNova Handles"><OctaNovaHandles /></FlowLayout>} />
+          <Route path="/settings/wallets" element={<FlowLayout title="Manage Wallets"><div className="p-4 text-center mt-10">Wallets List Coming Soon</div></FlowLayout>} />
+          <Route path="/settings/profile" element={<FlowLayout title="Edit Profile"><div className="p-4 text-center mt-10">Profile Edit Coming Soon</div></FlowLayout>} />
           
           <Route path="/receive" element={<FlowLayout title="Receive"><Receive /></FlowLayout>} />
           <Route path="/send" element={<FlowLayout title="Select Coin"><SendSelectCoin /></FlowLayout>} />
@@ -55,6 +76,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/swap" element={<FlowLayout title="Swap"><Swap /></FlowLayout>} />
           <Route path="/history" element={<FlowLayout title="History"><History /></FlowLayout>} />
           <Route path="/history/:id" element={<FlowLayout title="Transaction Details"><TransactionDetail /></FlowLayout>} />
+          <Route path="/notifications" element={<FlowLayout title="Notifications"><Notifications /></FlowLayout>} />
           
           <Route path="/wallet/create/face-id" element={<CreateWalletPassword />} />
           <Route path="/wallet/create/seed" element={<FlowLayout><CreateWalletSeed /></FlowLayout>} />
