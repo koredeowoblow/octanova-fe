@@ -234,45 +234,218 @@ export function SendStatus({ status }: { status: 'success'|'failed' }) {
 
 export function Swap() {
   const navigate = useNavigate();
+  const [fromToken, setFromToken] = useState({ symbol: 'ETH', name: 'Ethereum', bg: 'bg-[#627EEA]', balance: '1.45', rate: 2845.50 });
+  const [toToken, setToToken] = useState({ symbol: 'USDT', name: 'Tether', bg: 'bg-[#26A17B]', balance: '150.00', rate: 1.0 });
+  const [fromAmount, setFromAmount] = useState('');
+  const [showSelector, setShowSelector] = useState<'from' | 'to' | null>(null);
+
+  const tokens = [
+    { symbol: 'ETH', name: 'Ethereum', bg: 'bg-[#627EEA]', balance: '1.45', rate: 2845.50 },
+    { symbol: 'USDT', name: 'Tether', bg: 'bg-[#26A17B]', balance: '150.00', rate: 1.0 },
+    { symbol: 'BTC', name: 'Bitcoin', bg: 'bg-[#F7931A]', balance: '0.045', rate: 64000.00 },
+    { symbol: 'BNB', name: 'BNB', bg: 'bg-[#F3BA2F]', balance: '2.5', rate: 320.00 }
+  ];
+
+  const handleTokenSelect = (token: any) => {
+    if (showSelector === 'from') {
+      if (token.symbol === toToken.symbol) {
+        setToToken(fromToken);
+      }
+      setFromToken(token);
+    }
+    if (showSelector === 'to') {
+      if (token.symbol === fromToken.symbol) {
+        setFromToken(toToken);
+      }
+      setToToken(token);
+    }
+    setShowSelector(null);
+  };
+
+  const handleSwapSwitch = () => {
+    setFromToken(toToken);
+    setToToken(fromToken);
+    setFromAmount('');
+  };
+
+  const toAmount = fromAmount ? (parseFloat(fromAmount) * fromToken.rate / toToken.rate).toFixed(6).replace(/\.?0+$/, '') : '';
+
+  if (showSelector) {
+    return (
+      <div className="absolute inset-0 z-50 bg-brand-bg flex flex-col">
+        {/* Header */}
+        <div className="flex items-center px-4 py-4 border-b border-brand-border shrink-0 bg-brand-bg relative z-10">
+          <button onClick={() => setShowSelector(null)} className="p-2 -ml-2 rounded-full hover:bg-brand-card">
+             <XCircle className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="text-lg font-semibold absolute left-1/2 -translate-x-1/2">Select Token</h1>
+        </div>
+        {/* Token List */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 pt-4 relative">
+           <Input placeholder="Search tokens..." rightElement={<Search className="w-5 h-5 text-gray-500" />} />
+           <div className="flex flex-col mt-4 pb-12">
+             {tokens.map((token, i) => (
+               <div key={i} onClick={() => handleTokenSelect(token)} className="flex items-center justify-between py-4 border-b border-brand-border cursor-pointer hover:bg-brand-card/50">
+                 <div className="flex items-center gap-3">
+                   <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-inner", token.bg)}>{token.symbol[0]}</div>
+                   <div className="flex flex-col">
+                     <span className="font-semibold text-white">{token.symbol}</span>
+                     <span className="text-xs text-gray-500">{token.name}</span>
+                   </div>
+                 </div>
+                 <span className="font-semibold">{token.balance}</span>
+               </div>
+             ))}
+           </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 p-4 h-full relative">
       <div className="flex flex-col gap-2 relative">
-        <div className="bg-brand-card border border-brand-border rounded-2xl p-4">
+        <div className="bg-brand-card border border-brand-border rounded-2xl p-4 transition-colors focus-within:border-brand-primary">
           <p className="text-gray-400 text-sm mb-2">You pay</p>
           <div className="flex justify-between items-center">
-            <input type="text" placeholder="0" className="bg-transparent text-3xl font-bold w-1/2 focus:outline-none text-white" />
-            <div className="flex items-center gap-2 bg-brand-input px-3 py-1.5 rounded-full border border-brand-border">
-              <div className="w-5 h-5 bg-[#627EEA] rounded-full flex items-center justify-center text-[10px] font-bold">E</div>
-              <span className="font-semibold">ETH</span>
-            </div>
+            <input 
+              type="number" 
+              value={fromAmount}
+              onChange={(e) => setFromAmount(e.target.value)}
+              placeholder="0" 
+              className="bg-transparent text-3xl font-bold w-[60%] focus:outline-none text-white overflow-hidden text-ellipsis" 
+            />
+            <button onClick={() => setShowSelector('from')} className="flex items-center justify-between w-[110px] bg-brand-input hover:bg-brand-border px-2 py-1.5 rounded-full border border-brand-border shrink-0 transition-colors">
+              <div className="flex items-center gap-2">
+                <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-inner", fromToken.bg)}>{fromToken.symbol[0]}</div>
+                <span className="font-semibold">{fromToken.symbol}</span>
+              </div>
+            </button>
           </div>
-          <p className="text-gray-500 text-xs mt-2">Balance: 1.45 ETH</p>
+          <div className="flex justify-between items-center mt-2">
+            <p className="text-gray-500 text-xs text-brand-primary mt-1 font-medium cursor-pointer" onClick={() => setFromAmount(fromToken.balance)}>Use Max</p>
+            <p className="text-gray-500 text-xs">Balance: {fromToken.balance} {fromToken.symbol}</p>
+          </div>
         </div>
 
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-brand-bg rounded-full border border-brand-border flex items-center justify-center z-10 text-brand-primary">
-          <ArrowDownLeft className="w-5 h-5" />
-        </div>
+        <button onClick={handleSwapSwitch} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-brand-input hover:bg-brand-bg transition-colors rounded-full border-2 border-brand-border flex items-center justify-center z-10 text-brand-primary hover:rotate-180 transform duration-300">
+          <ArrowDownLeft className="w-5 h-5 -rotate-90" />
+        </button>
 
         <div className="bg-brand-card border border-brand-border rounded-2xl p-4">
           <p className="text-gray-400 text-sm mb-2">You receive</p>
           <div className="flex justify-between items-center">
-            <input type="text" placeholder="0" className="bg-transparent text-3xl font-bold w-1/2 focus:outline-none text-white" />
-            <div className="flex items-center gap-2 bg-brand-input px-3 py-1.5 rounded-full border border-brand-border">
-              <div className="w-5 h-5 bg-[#26A17B] rounded-full flex items-center justify-center text-[10px] font-bold">U</div>
-              <span className="font-semibold">USDT</span>
-            </div>
+            <input type="text" value={toAmount} readOnly placeholder="0" className="bg-transparent text-3xl font-bold w-[60%] focus:outline-none text-gray-300 overflow-hidden text-ellipsis" />
+            <button onClick={() => setShowSelector('to')} className="flex items-center justify-between w-[110px] bg-brand-input hover:bg-brand-border px-2 py-1.5 rounded-full border border-brand-border shrink-0 transition-colors">
+              <div className="flex items-center gap-2">
+                <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-inner", toToken.bg)}>{toToken.symbol[0]}</div>
+                <span className="font-semibold">{toToken.symbol}</span>
+              </div>
+            </button>
+          </div>
+          <div className="flex justify-between items-center mt-2">
+            <p className="text-gray-500 text-xs"></p>
+            <p className="text-gray-500 text-xs">Balance: {toToken.balance} {toToken.symbol}</p>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-between items-center mt-6 text-sm">
-        <span className="text-gray-400">Exchange Rate</span>
-        <span className="font-medium">1 ETH = 2,845.50 USDT</span>
+      <div className="flex justify-between items-center mt-6 text-sm bg-brand-input px-4 py-3 rounded-xl border border-brand-border">
+        <span className="text-gray-400 font-medium">Exchange Rate</span>
+        <span className="font-semibold text-white tracking-wide">1 {fromToken.symbol} = {(fromToken.rate / toToken.rate).toFixed(2)} {toToken.symbol}</span>
       </div>
 
       <div className="mt-auto">
-        <Button className="w-full">Review Swap</Button>
+        <Button disabled={!fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromToken.balance)} onClick={() => navigate('/swap/review', { state: { fromToken, toToken, fromAmount, toAmount } })} className="w-full">
+          {parseFloat(fromAmount) > parseFloat(fromToken.balance) ? 'Insufficient Balance' : 'Review Swap'}
+        </Button>
       </div>
+    </div>
+  );
+}
+
+export function SwapReview() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="flex flex-col flex-1 p-6 h-full">
+      <div className="flex flex-col items-center py-6 mb-2">
+        <span className="text-gray-400 text-sm mb-2 text-center">You are swapping</span>
+        <span className="text-4xl font-bold tracking-tight text-white mb-3 text-center">1.25 ETH</span>
+        <span className="text-brand-primary w-10 h-10 flex items-center justify-center bg-brand-input rounded-full border-2 border-brand-border mb-3"><ArrowDownLeft className="rotate-[135deg] w-5 h-5"/></span>
+        <span className="text-4xl font-bold tracking-tight text-brand-success text-center">3,556.88 USDT</span>
+      </div>
+
+      <div className="bg-brand-card border border-brand-border rounded-2xl p-4 flex flex-col gap-4 text-sm mb-auto">
+        <div className="flex justify-between items-center">
+          <span className="text-gray-400">Provider</span>
+          <span className="font-medium text-white flex items-center gap-1">OctaSwap <span className="text-brand-primary">⚡</span></span>
+        </div>
+        <div className="w-full h-px bg-brand-border"></div>
+        <div className="flex justify-between items-center">
+          <span className="text-gray-400">Exchange Rate</span>
+          <span className="font-medium text-white tracking-wide">1 ETH = 2845.50 USDT</span>
+        </div>
+        <div className="w-full h-px bg-brand-border"></div>
+        <div className="flex justify-between items-center">
+          <span className="text-gray-400">Network Fee</span>
+          <span className="font-medium">0.001 ETH ($2.85)</span>
+        </div>
+        <div className="w-full h-px bg-brand-border"></div>
+        <div className="flex justify-between items-center">
+          <span className="text-gray-400">Max Slippage</span>
+          <span className="font-medium text-brand-warning">0.5%</span>
+        </div>
+      </div>
+
+      <div className="mt-8 flex flex-col gap-3">
+        <Button onClick={() => navigate('/swap/processing')}>Confirm Swap</Button>
+        <Button variant="ghost" onClick={() => navigate('/swap/failed')} className="text-gray-500 hover:text-brand-error">Simulate Swap Failure</Button>
+      </div>
+    </div>
+  );
+}
+
+export function SwapProcessing() {
+  const navigate = useNavigate();
+  React.useEffect(() => {
+    const t = setTimeout(() => navigate('/swap/success'), 2500);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-brand-bg text-center h-full">
+      <div className="w-24 h-24 bg-brand-card rounded-full flex items-center justify-center mb-8 relative border-2 border-brand-primary shadow-[0_0_40px_rgba(124,58,237,0.3)]">
+         <RefreshCw className="w-10 h-10 text-brand-primary animate-spin" />
+      </div>
+      <h2 className="text-2xl font-bold text-white mb-2">Executing Swap...</h2>
+      <p className="text-gray-400">Routing trade through the best decentralized protocols. This takes a few seconds.</p>
+    </div>
+  );
+}
+
+export function SwapStatus({ status }: { status: 'success'|'failed' }) {
+  const navigate = useNavigate();
+  return (
+    <div className="flex flex-col flex-1 p-6 h-full items-center justify-center text-center">
+      <div className="w-32 h-32 bg-brand-card rounded-full flex items-center justify-center mb-8 relative">
+        <div className={`absolute -top-4 -right-4 w-12 h-12 rounded-full ${status === 'success' ? 'bg-brand-success/20' : 'bg-brand-error/20'} flex items-center justify-center border-4 border-brand-bg`}>
+          {status === 'success' 
+            ? <CheckCircle2 className="w-6 h-6 text-brand-success" /> 
+            : <XCircle className="w-6 h-6 text-brand-error" />}
+        </div>
+        <RefreshCw className="w-12 h-12 text-white" />
+      </div>
+      <h1 className="text-2xl font-bold mb-2">
+        {status === 'success' ? 'Swap Successful!' : 'Swap Failed'}
+      </h1>
+      <p className="text-gray-400 text-sm mb-12">
+        {status === 'success' ? 'Your new tokens have been successfully exchanged and deposited to your Main Wallet.' : 'Slippage tolerance was exceeded before execution. Your assets were safely refunded.'}
+      </p>
+      
+      <Button className="mt-auto w-full" onClick={() => navigate('/home')}>
+        Done
+      </Button>
     </div>
   );
 }

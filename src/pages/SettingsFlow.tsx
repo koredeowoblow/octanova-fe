@@ -311,6 +311,43 @@ export function OctaNovaHandles() {
   );
 }
 
+export function ManageTokens() {
+  const [tokens, setTokens] = useState([
+    { symbol: 'BTC', name: 'Bitcoin', bg: 'bg-[#F7931A]', network: 'Bitcoin', enabled: true },
+    { symbol: 'ETH', name: 'Ethereum', bg: 'bg-[#627EEA]', network: 'Ethereum', enabled: true },
+    { symbol: 'BNB', name: 'BNB', bg: 'bg-[#F3BA2F]', network: 'BNB Smart Chain', enabled: true },
+    { symbol: 'USDT', name: 'Tether', bg: 'bg-[#26A17B]', network: 'Tron', enabled: true },
+    { symbol: 'SOL', name: 'Solana', bg: 'bg-black', network: 'Solana', enabled: false },
+    { symbol: 'MATIC', name: 'Polygon', bg: 'bg-[#8247E5]', network: 'Polygon', enabled: false }
+  ]);
+
+  const toggleToken = (index: number) => {
+    const newTokens = [...tokens];
+    newTokens[index].enabled = !newTokens[index].enabled;
+    setTokens(newTokens);
+  };
+
+  return (
+    <div className="flex flex-col flex-1 p-4 h-full">
+      <Input placeholder="Search tokens..." rightElement={<Search className="w-5 h-5 text-gray-500" />} />
+      <div className="flex flex-col gap-0 mt-4 pb-4">
+        {tokens.map((token, i) => (
+          <div key={i} className="flex items-center justify-between py-4 border-b border-brand-border">
+            <div className="flex items-center gap-3">
+              <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-inner", token.bg)}>{token.symbol[0]}</div>
+              <div className="flex flex-col border-none">
+                <span className="font-semibold text-white">{token.symbol}</span>
+                <span className="text-xs text-gray-500">{token.network}</span>
+              </div>
+            </div>
+            <ToggleSwitch checked={token.enabled} onChange={() => toggleToken(i)} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Helpers
 function ScanIcon(props: any) {
   return <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>;

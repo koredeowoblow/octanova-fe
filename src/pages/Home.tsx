@@ -38,7 +38,7 @@ export function Home() {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-4 gap-4 mb-6">
-          <ActionBtn icon={<ArrowDownLeft className="text-brand-primary" />} label="Receive" onClick={() => navigate('/receive')} />
+          <ActionBtn icon={<ArrowDownLeft className="text-brand-primary" />} label="Deposit" onClick={() => navigate('/deposit')} />
           <ActionBtn icon={<ArrowUpRight className="text-brand-primary" />} label="Send" onClick={() => navigate('/send')} />
           <ActionBtn icon={<ArrowRightLeft className="text-brand-primary" />} label="Swap" onClick={() => navigate('/swap')} />
           <ActionBtn icon={<History className="text-brand-primary" />} label="History" onClick={() => navigate('/history')} />

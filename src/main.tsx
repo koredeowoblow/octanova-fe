@@ -43,6 +43,9 @@ const SendConfirm = load(actionLoad, 'SendConfirm');
 const SendLoading = load(actionLoad, 'SendLoading');
 const SendStatus = load(actionLoad, 'SendStatus');
 const Swap = load(actionLoad, 'Swap');
+const SwapReview = load(actionLoad, 'SwapReview');
+const SwapProcessing = load(actionLoad, 'SwapProcessing');
+const SwapStatus = load(actionLoad, 'SwapStatus');
 const History = load(actionLoad, 'History');
 const TransactionDetail = load(actionLoad, 'TransactionDetail');
 
@@ -62,6 +65,7 @@ const DAppConnection = load(settingsLoad, 'DAppConnection');
 const OctaNovaHandles = load(settingsLoad, 'OctaNovaHandles');
 const ManageWallets = load(settingsLoad, 'ManageWallets');
 const EditProfile = load(settingsLoad, 'EditProfile');
+const ManageTokens = load(settingsLoad, 'ManageTokens');
 
 const bankLoad = () => import('./pages/BankTransferFlow');
 const BankTransferSelectBank = load(bankLoad, 'BankTransferSelectBank');
@@ -127,6 +131,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/settings/handles" element={<FlowLayout title="OctaNova Handles"><OctaNovaHandles /></FlowLayout>} />
           <Route path="/settings/wallets" element={<FlowLayout title="Manage Wallets"><ManageWallets /></FlowLayout>} />
           <Route path="/settings/profile" element={<FlowLayout title="Edit Profile"><EditProfile /></FlowLayout>} />
+          <Route path="/settings/tokens" element={<FlowLayout title="Manage Tokens"><ManageTokens /></FlowLayout>} />
           
           <Route path="/receive" element={<FlowLayout title="Receive"><Receive /></FlowLayout>} />
           <Route path="/send" element={<FlowLayout title="Select Coin"><SendSelectCoin /></FlowLayout>} />
@@ -137,6 +142,11 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/send/success" element={<SendStatus status="success" />} />
           <Route path="/send/failed" element={<SendStatus status="failed" />} />
           <Route path="/swap" element={<FlowLayout title="Swap"><Swap /></FlowLayout>} />
+          <Route path="/swap/review" element={<FlowLayout title="Review Swap"><SwapReview /></FlowLayout>} />
+          <Route path="/swap/processing" element={<SwapProcessing />} />
+          <Route path="/swap/success" element={<SwapStatus status="success" />} />
+          <Route path="/swap/failed" element={<SwapStatus status="failed" />} />
+          
           <Route path="/history" element={<FlowLayout title="History"><History /></FlowLayout>} />
           <Route path="/history/:id" element={<FlowLayout title="Transaction Details"><TransactionDetail /></FlowLayout>} />
           <Route path="/notifications" element={<FlowLayout title="Notifications"><Notifications /></FlowLayout>} />
