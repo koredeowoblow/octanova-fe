@@ -1,13 +1,54 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, Suspense } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Home, ShoppingBag, Megaphone, User } from "lucide-react";
 import { cn } from "../lib/utils";
 
-/** Base App Wrapper containing the mobile constraint */
+/** Base App Wrapper containing the mobile constraint and transition intercepts */
 export function AppWrapper() {
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
+
+  useEffect(() => {
+    // Intercept Route Changes
+    setIsLoading(true);
+    setShouldRender(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 400); // Minimum 400ms display threshold
+
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      const t = setTimeout(() => setShouldRender(false), 300); // Exit fade
+      return () => clearTimeout(t);
+    }
+  }, [isLoading]);
+
   return (
     <div className="min-h-screen bg-black flex justify-center items-center font-sans relative overflow-hidden">
+      
+      {/* Route Swap Interception Transition */}
+      {shouldRender && (
+        <div className={cn(
+          "fixed inset-0 z-[99999] bg-[#0a0a0a] flex items-center justify-center transition-opacity duration-300 pointer-events-none",
+          isLoading ? "opacity-100" : "opacity-0",
+          "motion-reduce:transition-none motion-reduce:duration-0"
+        )}>
+           <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-brand-primary to-pink-500 p-0.5 animate-pulse motion-reduce:animate-none">
+             <div className="w-full h-full bg-black rounded-full flex items-center justify-center border-2 border-black overflow-hidden relative shadow-[0_0_20px_#7c3aed]">
+                <span className="text-2xl font-bold text-white">O</span>
+             </div>
+           </div>
+        </div>
+      )}
+
       <div className="w-full max-w-[390px] h-full sm:h-[844px] bg-brand-bg text-white relative overflow-hidden sm:rounded-[40px] sm:border-[8px] sm:border-gray-900 shadow-2xl flex flex-col">
-        <Outlet />
+        <Suspense fallback={null}>
+          <Outlet />
+        </Suspense>
       </div>
     </div>
   );

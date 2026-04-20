@@ -2,26 +2,73 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppWrapper, FlowLayout, MainLayout } from './components/layout';
-
-/* Flows */
-import { SigninSignupWelcome, Signup, ConfirmEmail, EmailVerified, CreatePassword, WelcomeAboard, Login, LoginPassword } from './pages/AuthFlow';
-import { Home, Deposit } from './pages/Home';
-import { P2P, P2PBuy, P2PSell } from './pages/P2PFlow';
-import { CreateWalletPassword, CreateWalletSeed, WalletLoading } from './pages/WalletFlow';
-import { Receive, SendSelectCoin, SendAddress, SendAmount, SendConfirm, SendLoading, SendStatus, Swap, History, TransactionDetail } from './pages/ActionFlow';
-import { Notifications } from './pages/Notifications';
-import { 
-  SettingsHub, AddressBook, AddressBookAdd, Preferences, 
-  PreferencesCurrency, PreferencesLanguage, PreferencesTheme,
-  Security, DAppConnection, OctaNovaHandles, 
-  ManageWallets, EditProfile
-} from './pages/SettingsFlow';
-import {
-  BankTransferSelectBank, BankTransferAmount, BankTransferDetails,
-  BankTransferProcessing, BankTransferSuccess
-} from './pages/BankTransferFlow';
+import React, { Suspense, lazy } from 'react';
 
 import './index.css';
+
+// Lazy loader helper ensuring clean syntax mappings
+const load = (resolver: () => Promise<any>, name: string) => lazy(() => resolver().then(m => ({ default: m[name] })));
+
+/* Code-split bundle boundaries */
+const authLoad = () => import('./pages/AuthFlow');
+const SigninSignupWelcome = load(authLoad, 'SigninSignupWelcome');
+const Signup = load(authLoad, 'Signup');
+const ConfirmEmail = load(authLoad, 'ConfirmEmail');
+const EmailVerified = load(authLoad, 'EmailVerified');
+const CreatePassword = load(authLoad, 'CreatePassword');
+const WelcomeAboard = load(authLoad, 'WelcomeAboard');
+const Login = load(authLoad, 'Login');
+const LoginPassword = load(authLoad, 'LoginPassword');
+
+const homeLoad = () => import('./pages/Home');
+const Home = load(homeLoad, 'Home');
+const Deposit = load(homeLoad, 'Deposit');
+
+const p2pLoad = () => import('./pages/P2PFlow');
+const P2P = load(p2pLoad, 'P2P');
+const P2PBuy = load(p2pLoad, 'P2PBuy');
+const P2PSell = load(p2pLoad, 'P2PSell');
+
+const walletLoad = () => import('./pages/WalletFlow');
+const CreateWalletPassword = load(walletLoad, 'CreateWalletPassword');
+const CreateWalletSeed = load(walletLoad, 'CreateWalletSeed');
+const WalletLoading = load(walletLoad, 'WalletLoading');
+
+const actionLoad = () => import('./pages/ActionFlow');
+const Receive = load(actionLoad, 'Receive');
+const SendSelectCoin = load(actionLoad, 'SendSelectCoin');
+const SendAddress = load(actionLoad, 'SendAddress');
+const SendAmount = load(actionLoad, 'SendAmount');
+const SendConfirm = load(actionLoad, 'SendConfirm');
+const SendLoading = load(actionLoad, 'SendLoading');
+const SendStatus = load(actionLoad, 'SendStatus');
+const Swap = load(actionLoad, 'Swap');
+const History = load(actionLoad, 'History');
+const TransactionDetail = load(actionLoad, 'TransactionDetail');
+
+const notifLoad = () => import('./pages/Notifications');
+const Notifications = load(notifLoad, 'Notifications');
+
+const settingsLoad = () => import('./pages/SettingsFlow');
+const SettingsHub = load(settingsLoad, 'SettingsHub');
+const AddressBook = load(settingsLoad, 'AddressBook');
+const AddressBookAdd = load(settingsLoad, 'AddressBookAdd');
+const Preferences = load(settingsLoad, 'Preferences');
+const PreferencesCurrency = load(settingsLoad, 'PreferencesCurrency');
+const PreferencesLanguage = load(settingsLoad, 'PreferencesLanguage');
+const PreferencesTheme = load(settingsLoad, 'PreferencesTheme');
+const Security = load(settingsLoad, 'Security');
+const DAppConnection = load(settingsLoad, 'DAppConnection');
+const OctaNovaHandles = load(settingsLoad, 'OctaNovaHandles');
+const ManageWallets = load(settingsLoad, 'ManageWallets');
+const EditProfile = load(settingsLoad, 'EditProfile');
+
+const bankLoad = () => import('./pages/BankTransferFlow');
+const BankTransferSelectBank = load(bankLoad, 'BankTransferSelectBank');
+const BankTransferAmount = load(bankLoad, 'BankTransferAmount');
+const BankTransferDetails = load(bankLoad, 'BankTransferDetails');
+const BankTransferProcessing = load(bankLoad, 'BankTransferProcessing');
+const BankTransferSuccess = load(bankLoad, 'BankTransferSuccess');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
