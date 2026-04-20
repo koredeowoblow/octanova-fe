@@ -133,6 +133,7 @@ export function Deposit() {
           title="Bank transfer" 
           badge="New"
           desc="Buy crypto via bank transfer seamlessly from your bank app" 
+          onClick={() => navigate('/deposit/bank')}
         />
       </div>
     </div>

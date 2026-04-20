@@ -122,31 +122,124 @@ export function AddressBookAdd() {
 }
 
 export function Preferences() {
+  const navigate = useNavigate();
+
   return (
     <div className="flex flex-col flex-1 p-6 h-full">
       <div className="flex flex-col gap-6">
         <h3 className="font-semibold text-gray-400 uppercase text-xs tracking-wider">General</h3>
-        <button className="flex justify-between items-center pb-4 border-b border-brand-border">
+        <button onClick={() => navigate('/settings/preferences/currency')} className="flex justify-between items-center pb-4 border-b border-brand-border">
           <span className="font-medium">Local Currency</span>
           <div className="flex items-center gap-2 text-gray-400">
             <span>NGN (₦)</span>
             <ChevronRight className="w-4 h-4" />
           </div>
         </button>
-        <button className="flex justify-between items-center pb-4 border-b border-brand-border">
+        <button onClick={() => navigate('/settings/preferences/language')} className="flex justify-between items-center pb-4 border-b border-brand-border">
           <span className="font-medium">App Language</span>
           <div className="flex items-center gap-2 text-gray-400">
             <span>English</span>
             <ChevronRight className="w-4 h-4" />
           </div>
         </button>
-        <button className="flex justify-between items-center pb-4 border-b border-brand-border">
+        <button onClick={() => navigate('/settings/preferences/theme')} className="flex justify-between items-center pb-4 border-b border-brand-border">
           <span className="font-medium">Color Theme</span>
           <div className="flex items-center gap-2 text-gray-400">
             <span>Dark</span>
             <ChevronRight className="w-4 h-4" />
           </div>
         </button>
+      </div>
+    </div>
+  );
+}
+
+export function PreferencesCurrency() {
+  const [selected, setSelected] = useState('NGN');
+  const currencies = [
+    { code: 'NGN', name: 'Nigerian Naira', symbol: '₦' },
+    { code: 'USD', name: 'US Dollar', symbol: '$' },
+    { code: 'EUR', name: 'Euro', symbol: '€' },
+    { code: 'GBP', name: 'British Pound', symbol: '£' },
+  ];
+
+  return (
+    <div className="flex flex-col flex-1 p-4 h-full">
+      <Input placeholder="Search currency" rightElement={<Search className="w-5 h-5" />} />
+      <div className="flex flex-col mt-6 gap-2">
+        {currencies.map(c => (
+          <button 
+            key={c.code}
+            onClick={() => setSelected(c.code)}
+            className="flex items-center justify-between p-4 bg-brand-card border border-brand-border rounded-xl hover:bg-brand-border-visible transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-brand-input flex items-center justify-center font-medium text-gray-300 border border-brand-border">{c.symbol}</div>
+              <div className="flex flex-col items-start">
+                <span className="font-semibold text-white">{c.code}</span>
+                <span className="text-xs text-gray-400">{c.name}</span>
+              </div>
+            </div>
+            <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center", selected === c.code ? "border-brand-primary" : "border-brand-border-visible")}>
+              {selected === c.code && <div className="w-3 h-3 bg-brand-primary rounded-full"></div>}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function PreferencesLanguage() {
+  const [selected, setSelected] = useState('English');
+  const languages = ['English', 'French', 'Spanish', 'Portuguese'];
+
+  return (
+    <div className="flex flex-col flex-1 p-4 h-full">
+      <div className="flex flex-col gap-2">
+        {languages.map(lang => (
+          <button 
+            key={lang}
+            onClick={() => setSelected(lang)}
+            className="flex items-center justify-between p-4 bg-brand-card border border-brand-border rounded-xl hover:bg-brand-border-visible transition-colors"
+          >
+            <span className="font-semibold text-white">{lang}</span>
+            <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center", selected === lang ? "border-brand-primary" : "border-brand-border-visible")}>
+              {selected === lang && <div className="w-3 h-3 bg-brand-primary rounded-full"></div>}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function PreferencesTheme() {
+  const [selected, setSelected] = useState('Dark');
+  const themes = [
+    { id: 'Dark', desc: 'Darker interface for low light.' },
+    { id: 'Light', desc: 'Bright and clean.' },
+    { id: 'System Match', desc: 'Automatically matches your device.' }
+  ];
+
+  return (
+    <div className="flex flex-col flex-1 p-4 h-full">
+      <div className="flex flex-col gap-2">
+        {themes.map(theme => (
+          <button 
+            key={theme.id}
+            onClick={() => setSelected(theme.id)}
+            className="flex items-center justify-between p-4 bg-brand-card border border-brand-border rounded-xl hover:bg-brand-border-visible transition-colors text-left"
+          >
+            <div className="flex flex-col gap-1">
+               <span className="font-semibold text-white">{theme.id}</span>
+               <span className="text-xs text-gray-400">{theme.desc}</span>
+            </div>
+            <div className={cn("w-6 h-6 rounded-full border-2 flex items-center justify-center", selected === theme.id ? "border-brand-primary" : "border-brand-border-visible")}>
+              {selected === theme.id && <div className="w-3 h-3 bg-brand-primary rounded-full"></div>}
+            </div>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -231,5 +324,79 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean, onChange: () =>
     >
       <div className={cn("w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all shadow", checked ? "left-[26px]" : "left-0.5")}></div>
     </button>
+  );
+}
+
+export function ManageWallets() {
+  const navigate = useNavigate();
+  return (
+    <div className="flex flex-col flex-1 p-4 h-full">
+      <div className="flex flex-col gap-4">
+        <div className="bg-brand-card border-brand-primary border-2 rounded-2xl p-4 flex justify-between items-center relative overflow-hidden cursor-pointer">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-brand-primary/10 rounded-bl-full blur-xl"></div>
+          <div className="flex items-center gap-4 z-10">
+            <div className="w-12 h-12 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-primary">
+              <Wallet className="w-6 h-6" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-semibold text-white">Main Wallet</span>
+              <span className="text-[11px] text-gray-400">Multi-coin • 12 seed words</span>
+            </div>
+          </div>
+          <div className="flex gap-2 items-center z-10">
+            <span className="bg-brand-primary text-white text-[10px] px-2 py-0.5 rounded-full font-medium">Active</span>
+            <button className="p-1 hover:bg-brand-border rounded-full transition-colors"><ChevronRight className="w-5 h-5 text-gray-400" /></button>
+          </div>
+        </div>
+
+        <div className="bg-brand-bg border border-brand-border rounded-2xl p-4 flex justify-between items-center cursor-pointer hover:bg-brand-card transition-colors">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-brand-input flex items-center justify-center border border-brand-border">
+              <Wallet className="w-6 h-6 text-gray-400" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-medium text-gray-300">Trading Wallet</span>
+              <span className="text-[11px] text-gray-500">Imported • Private Key</span>
+            </div>
+          </div>
+          <button className="p-1 hover:bg-brand-border rounded-full transition-colors"><ChevronRight className="w-5 h-5 text-gray-400" /></button>
+        </div>
+      </div>
+      
+      <div className="mt-auto flex flex-col gap-3">
+         <Button variant="secondary"><Plus className="w-5 h-5 mr-2" /> Create New Wallet</Button>
+         <Button variant="ghost" className="border border-brand-border">Import Existing Wallet</Button>
+      </div>
+    </div>
+  );
+}
+
+export function EditProfile() {
+  const navigate = useNavigate();
+  return (
+    <div className="flex flex-col flex-1 p-6 h-full">
+      <div className="flex flex-col items-center justify-center mb-8 pt-4">
+        <div className="relative w-24 h-24 mb-3">
+          <div className="w-full h-full rounded-full bg-gradient-to-tr from-brand-primary to-pink-500 p-1">
+            <div className="w-full h-full bg-black rounded-full flex items-center justify-center border-2 border-black overflow-hidden relative group">
+              <span className="text-3xl font-bold text-white">K</span>
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer hover:bg-black/80 transition-colors">
+                <svg className="w-8 h-8 text-white relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span className="text-brand-primary text-sm font-medium hover:text-brand-primary-active cursor-pointer transition-colors">Change Avatar</span>
+      </div>
+
+      <div className="flex flex-col gap-5">
+        <Input label="Full Name" defaultValue="Korede Owolabi" />
+        <Input label="Username / Handle" defaultValue="koredeowolabi" rightElement={<span className="text-brand-primary font-bold">@</span>} />
+        <Input label="Email Address" type="email" defaultValue="koredeowolabi62@gmail.com" />
+        <Input label="Phone Number" type="tel" defaultValue="+234 812 345 6789" />
+      </div>
+
+      <Button className="mt-8 mb-4 w-full" onClick={() => navigate(-1)}>Save Changes</Button>
+    </div>
   );
 }
