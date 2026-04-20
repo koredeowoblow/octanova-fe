@@ -19,26 +19,61 @@ export function CreateWalletPassword() {
 export function CreateWalletSeed() {
   const navigate = useNavigate();
   const seed = ["apple", "burger", "coffee", "dragon", "eagle", "falcon", "ghost", "hammer", "island", "jungle", "kangaroo", "lemon"];
+  
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(seed.join(' ')).then(() => {
+      setCopied(true);
+      // Security Requirement: Clear clipboard automatically after 60 seconds
+      setTimeout(() => {
+        navigator.clipboard.writeText('');
+        setCopied(false);
+      }, 60000);
+    });
+  };
 
   return (
     <div className="flex flex-col flex-1 p-6 h-full">
       <h1 className="text-2xl font-bold mb-2">Set Your Seed Phrase</h1>
-      <p className="text-gray-400 text-sm mb-6">Write down these 12 words in order.</p>
+      <p className="text-gray-400 text-sm mb-6">Write down these 12 words in order. Tap and hold to reveal.</p>
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div 
+        className="grid grid-cols-2 gap-3 mb-6 relative select-none"
+        onPointerDown={() => setIsRevealed(true)}
+        onPointerUp={() => setIsRevealed(false)}
+        onPointerLeave={() => setIsRevealed(false)}
+      >
         {seed.map((word, i) => (
-          <div key={i} className="flex items-center gap-2 bg-brand-input border border-brand-border rounded-xl px-4 py-3">
-            <span className="text-gray-500 text-sm w-4">{i + 1}.</span>
-            <span className="font-medium text-white">{word}</span>
+          <div key={i} className="flex items-center gap-2 bg-brand-input border border-brand-border rounded-xl px-4 py-3 overflow-hidden">
+            <span className="text-gray-500 text-sm w-4 shrink-0">{i + 1}.</span>
+            <span className={cn("font-medium text-white transition-all duration-200", !isRevealed && "blur-md select-none")}>{word}</span>
           </div>
         ))}
+        
+        {!isRevealed && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-brand-bg/80 px-4 py-2 rounded-full border border-brand-border text-sm font-medium flex items-center gap-2 shadow-xl backdrop-blur-sm">
+              Tap & Hold to Reveal
+            </div>
+          </div>
+        )}
       </div>
 
-      <button className="flex items-center gap-2 text-brand-primary justify-center w-full mb-8 font-medium">
-        <Copy className="w-4 h-4" /> Copy Seed Phrase
+      <button onClick={handleCopy} className={cn("flex items-center gap-2 justify-center w-full mb-8 font-medium transition-colors", copied ? "text-brand-success" : "text-brand-primary")}>
+        {copied ? (
+          <><CheckCircle2 className="w-4 h-4" /> Copied (Clears in 60s)</>
+        ) : (
+          <><Copy className="w-4 h-4" /> Copy Seed Phrase</>
+        )}
       </button>
 
       <div className="flex flex-col gap-3 text-sm text-gray-400">
+        <div className="flex items-start gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-brand-error mt-1.5 shrink-0" />
+          <p className="text-brand-error">Never share these words with anyone.</p>
+        </div>
         <div className="flex items-start gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-brand-primary mt-1.5 shrink-0" />
           <p>Please handwrite your seed phrase and keep it somewhere safe.</p>

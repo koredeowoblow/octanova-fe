@@ -1,32 +1,81 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowDownLeft, ArrowUpRight, Copy, CheckCircle2, QrCode, Search, Scan, XCircle, RefreshCw } from 'lucide-react';
 import { Button, Input } from '../components/ui';
 import { Numpad } from '../components/Numpad';
-import { cn } from '../lib/utils';
+import { cn, truncateAddress } from '../lib/utils';
 
-export function Receive() {
+export function ReceiveSelectCoin() {
   const navigate = useNavigate();
+  const tokens = [
+    { symbol: 'BTC', name: 'Bitcoin', bg: 'bg-[#F7931A]', network: 'Bitcoin' },
+    { symbol: 'ETH', name: 'Ethereum', bg: 'bg-[#627EEA]', network: 'Ethereum' },
+    { symbol: 'USDT', name: 'Tether', bg: 'bg-[#26A17B]', network: 'Tron' },
+    { symbol: 'BNB', name: 'BNB', bg: 'bg-[#F3BA2F]', network: 'BNB Smart Chain' },
+    { symbol: 'SOL', name: 'Solana', bg: 'bg-black', network: 'Solana' },
+    { symbol: 'MATIC', name: 'Polygon', bg: 'bg-[#8247E5]', network: 'Polygon' }
+  ];
+
+  return (
+    <div className="flex flex-col flex-1 pb-4">
+      <div className="px-4 py-2 mt-2">
+        <Input placeholder="Search coin to receive" rightElement={<Search className="w-5 h-5" />} />
+      </div>
+      <div className="mt-4 flex flex-col">
+        {tokens.map((token, i) => (
+          <div key={i} onClick={() => navigate('/receive/qr', { state: { token } })} className="flex items-center gap-3 py-4 px-4 border-b border-brand-border cursor-pointer hover:bg-brand-card/50 transition-colors">
+            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-inner", token.bg)}>{token.symbol[0]}</div>
+            <div className="flex flex-col">
+              <span className="font-semibold">{token.name} ({token.symbol})</span>
+              <span className="text-xs text-gray-500">{token.network}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function ReceiveQR() {
+  const navigate = useNavigate();
+  const location = useLocation() as any;
+  const token = location.state?.token || { symbol: 'ETH', name: 'Ethereum', bg: 'bg-[#627EEA]', network: 'Ethereum' };
+
   return (
     <div className="flex flex-col flex-1 p-6 h-full items-center">
-      <div className="w-full bg-brand-card border border-brand-border rounded-3xl p-8 flex flex-col items-center gap-6 mt-8">
-        <div className="bg-white p-4 rounded-2xl">
-          {/* Placeholder for QR Code */}
-          <QrCode className="w-48 h-48 text-black" />
+      <div className="w-full bg-brand-card border border-brand-border rounded-3xl p-8 flex flex-col items-center gap-6 mt-8 relative overflow-hidden">
+        
+        {/* Decorative flair */}
+        <div className={`absolute -top-12 -right-12 w-32 h-32 blur-3xl opacity-20 rounded-full ${token.bg}`}></div>
+
+        <div className="bg-white p-4 rounded-2xl relative z-10 w-48 h-48 border-4 border-brand-bg flex items-center justify-center">
+          <QrCode className="w-36 h-36 text-black" />
+          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white shadow-lg ${token.bg}`}>
+            {token.symbol[0]}
+          </div>
         </div>
         
-        <div className="text-center">
-          <p className="text-gray-400 text-sm mb-2">Your Ethereum Address</p>
-          <p className="font-mono text-sm text-white break-all">0x71C...976F</p>
+        <div className="text-center relative z-10 w-full">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className={`w-2 h-2 rounded-full ${token.bg}`}></div>
+            <p className="text-gray-400 text-sm font-medium">Your {token.network} Address</p>
+          </div>
+          <div className="bg-brand-input rounded-xl p-3 border border-brand-border">
+            <p className="font-mono text-[13px] text-white break-all tracking-wide">{truncateAddress('0x71C7656EC7ab88b098defB751B7401B5f6d8976F')}</p>
+          </div>
         </div>
 
-        <Button className="w-full mt-4 bg-brand-input border border-brand-border text-white hover:bg-brand-border" variant="secondary">
-          <Copy className="w-4 h-4 mr-2" /> Copy Address
-        </Button>
+        <div className="flex w-full gap-3 relative z-10">
+          <Button className="flex-1 bg-brand-input border border-brand-border text-white hover:bg-brand-border" variant="secondary">
+            <Copy className="w-4 h-4 mr-2" /> Copy
+          </Button>
+          <Button className="flex-1">Share</Button>
+        </div>
       </div>
 
-      <div className="bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-xl p-4 text-xs mt-6 text-center">
-        Send only Ethereum (ERC-20) to this address. Sending any other coins may result in permanent loss.
+      <div className="bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-xl p-4 text-xs mt-6 flex gap-3 items-start">
+        <span className="font-bold shrink-0">⚠️</span>
+        <span className="leading-snug">Send only <strong className="font-bold uppercase">{token.symbol}</strong> via the <strong className="font-bold">{token.network}</strong> network to this address. Sending any other coins may result in permanent loss.</span>
       </div>
     </div>
   );
@@ -121,6 +170,18 @@ export function SendAddress() {
 export function SendAmount() {
   const navigate = useNavigate();
   const [amount, setAmount] = useState('0');
+  const availableBalance = 1.45;
+
+  const handleNumpadPress = (d: string) => {
+    setAmount(prev => {
+      const newVal = prev === '0' && d !== '.' ? d : prev + d;
+      // Prevent negative or non-numeric logic inherently via numpad hook,
+      // but double check structure:
+      return newVal;
+    });
+  };
+
+  const isInvalid = parseFloat(amount) > availableBalance || parseFloat(amount) < 0;
 
   return (
     <div className="flex flex-col flex-1 p-6 h-full">
@@ -130,19 +191,22 @@ export function SendAmount() {
             <div className="w-6 h-6 bg-[#627EEA] rounded-full flex items-center justify-center text-[10px] font-bold">E</div>
             <span className="font-semibold">ETH</span>
           </div>
-          <span className="text-sm text-gray-400">Available: 1.45 ETH</span>
+          <span className="text-sm text-gray-400">Available: {availableBalance} ETH</span>
         </div>
 
         <div className="flex flex-col gap-2 items-center justify-center py-8">
-          <span className="text-5xl font-bold tracking-tight text-white">${amount || '0'}</span>
-          <button onClick={() => setAmount('1240.50')} className="text-brand-primary text-sm font-medium mt-2 bg-brand-primary/10 px-3 py-1 rounded-full cursor-pointer hover:bg-brand-primary/20 transition-colors">Max</button>
+          <span className={cn("text-5xl font-bold tracking-tight", isInvalid ? "text-brand-error" : "text-white")}>
+            ${amount || '0'}
+          </span>
+          {isInvalid && <span className="text-brand-error text-xs font-medium">Insufficient balance</span>}
+          <button onClick={() => setAmount(availableBalance.toString())} className="text-brand-primary text-sm font-medium mt-2 bg-brand-primary/10 px-3 py-1 rounded-full cursor-pointer hover:bg-brand-primary/20 transition-colors">Max</button>
         </div>
       </div>
 
       <div className="mt-auto mb-[-24px] -mx-6">
-        <Numpad hasDecimal onPress={(d) => setAmount(prev => prev === '0' ? d : prev + d)} onDelete={() => setAmount(prev => prev.length > 1 ? prev.slice(0, -1) : '0')} />
+        <Numpad hasDecimal onPress={handleNumpadPress} onDelete={() => setAmount(prev => prev.length > 1 ? prev.slice(0, -1) : '0')} />
         <div className="px-6 pb-6 pt-2">
-          <Button disabled={amount === '0'} onClick={() => navigate('/send/confirm')}>Preview Send</Button>
+          <Button disabled={amount === '0' || isInvalid} onClick={() => navigate('/send/confirm')}>Preview Send</Button>
         </div>
       </div>
     </div>
@@ -161,7 +225,7 @@ export function SendConfirm() {
       <div className="bg-brand-card border border-brand-border rounded-2xl p-4 flex flex-col gap-4 text-sm mb-auto">
         <div className="flex justify-between">
           <span className="text-gray-400">To</span>
-          <span className="font-medium text-white break-all text-right w-48">0x71C7656EC7ab88b098defB751B7401B5f6d8976F</span>
+          <span className="font-medium text-white break-all text-right w-48">{truncateAddress('0x71C7656EC7ab88b098defB751B7401B5f6d8976F')}</span>
         </div>
         <div className="w-full h-px bg-brand-border"></div>
         <div className="flex justify-between">

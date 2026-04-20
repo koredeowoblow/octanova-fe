@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Filter, ChevronDown, CheckCircle2, MessageCircle, ArrowLeft } from 'lucide-react';
-import { Button, Input } from '../components/ui';
+import { Button, Input, OTPInput } from '../components/ui';
 import { BottomSheet } from '../components/BottomSheet';
 
 export function P2P() {
@@ -93,6 +93,33 @@ function FilterPill({ label, onClick }: { label: string, onClick?: () => void })
 
 export function P2PBuy() {
   const navigate = useNavigate();
+  const [showOtp, setShowOtp] = useState(false);
+  const [otp, setOtp] = useState('');
+  
+  const handleVerifyOTP = () => {
+    // SECURITY: Simulated OTP validation API call for trade action
+    if(otp.length === 6) {
+      setShowOtp(false);
+      navigate('/p2p/transaction');
+    }
+  };
+
+  if (showOtp) {
+    return (
+      <div className="flex flex-col flex-1 p-6 h-full items-center justify-center relative">
+        <h2 className="text-xl font-bold mb-2">Security Verification</h2>
+        <p className="text-gray-400 text-sm mb-6 text-center">Enter the 6-digit code sent to your phone to authorize this trade.</p>
+        
+        <OTPInput length={6} value={otp} onChange={setOtp} />
+        
+        <div className="mt-8 flex flex-col gap-3 w-full">
+          <Button disabled={otp.length !== 6} onClick={handleVerifyOTP}>Verify & Buy</Button>
+          <Button variant="ghost" onClick={() => setShowOtp(false)}>Cancel</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 p-4 h-full relative">
       <div className="bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-xl p-3 text-sm mb-6 flex gap-2">
@@ -101,7 +128,7 @@ export function P2PBuy() {
 
       <div className="flex justify-between items-center mb-6">
         <span className="text-gray-400 text-sm">Rate</span>
-        <span className="font-bold">139,247,858 NGN</span>
+        <span className="font-bold text-white tracking-wide">139,247,858 NGN</span>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -121,13 +148,40 @@ export function P2PBuy() {
         <Link to="/p2p/seller" className="text-sm text-brand-primary flex items-center gap-1">Get more details about seller <ChevronDown className="w-4 h-4 -rotate-90" /></Link>
       </div>
 
-      <Button className="mt-auto" onClick={() => navigate('/p2p/transaction')}>Buy BTC with 0 fees</Button>
+      <Button className="mt-auto" onClick={() => setShowOtp(true)}>Buy BTC with 0 fees</Button>
     </div>
   );
 }
 
 export function P2PSell() {
   const navigate = useNavigate();
+  const [showOtp, setShowOtp] = useState(false);
+  const [otp, setOtp] = useState('');
+  
+  const handleVerifyOTP = () => {
+    // SECURITY: Simulated OTP validation API call for trade action
+    if(otp.length === 6) {
+      setShowOtp(false);
+      navigate('/p2p/transaction');
+    }
+  };
+
+  if (showOtp) {
+    return (
+      <div className="flex flex-col flex-1 p-6 h-full items-center justify-center relative">
+        <h2 className="text-xl font-bold mb-2">Security Verification</h2>
+        <p className="text-gray-400 text-sm mb-6 text-center">Enter the 6-digit code sent to your phone to authorize this trade.</p>
+        
+        <OTPInput length={6} value={otp} onChange={setOtp} />
+        
+        <div className="mt-8 flex flex-col gap-3 w-full">
+          <Button disabled={otp.length !== 6} onClick={handleVerifyOTP}>Verify & Sell</Button>
+          <Button variant="ghost" onClick={() => setShowOtp(false)}>Cancel</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 p-4 h-full relative">
       <div className="bg-brand-error/10 border border-brand-error/30 text-brand-error rounded-xl p-3 text-sm mb-6 flex gap-2">
@@ -136,7 +190,7 @@ export function P2PSell() {
 
       <div className="flex justify-between items-center mb-6">
         <span className="text-gray-400 text-sm">Rate</span>
-        <span className="font-bold">139,247,858 NGN</span>
+        <span className="font-bold text-white tracking-wide">139,247,858 NGN</span>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -156,7 +210,7 @@ export function P2PSell() {
         <Link to="/p2p/seller" className="text-sm text-brand-primary flex items-center gap-1">Get more details about buyer <ChevronDown className="w-4 h-4 -rotate-90" /></Link>
       </div>
 
-      <Button className="mt-auto bg-brand-error hover:bg-brand-error border-brand-error" onClick={() => navigate('/p2p/transaction')}>Sell BTC with 0 fees</Button>
+      <Button className="mt-auto bg-brand-error hover:bg-brand-error border-brand-error" onClick={() => setShowOtp(true)}>Sell BTC with 0 fees</Button>
     </div>
   );
 }

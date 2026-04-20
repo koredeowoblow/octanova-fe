@@ -226,6 +226,43 @@ export function Login() {
 export function LoginPassword() {
   const navigate = useNavigate();
   const [pw, setPw] = useState('');
+  const [attempts, setAttempts] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleLogin = () => {
+    // SECURITY: Mock strict failed auth counting
+    if (pw === 'password123') { 
+      // success mock
+      navigate('/home');
+    } else {
+      const currentAttempts = attempts + 1;
+      setAttempts(currentAttempts);
+      
+      if (currentAttempts >= 5) {
+        setIsLocked(true);
+        setErrorMsg('');
+      } else {
+        setErrorMsg(`Incorrect password. ${5 - currentAttempts} attempts remaining.`);
+      }
+      setPw('');
+    }
+  };
+
+  if (isLocked) {
+    return (
+      <div className="flex flex-col flex-1 p-6 h-full items-center justify-center text-center">
+        <div className="w-20 h-20 bg-brand-error/20 rounded-full flex items-center justify-center mb-6 border border-brand-error/50">
+          <Lock className="w-10 h-10 text-brand-error" />
+        </div>
+        <h1 className="text-2xl font-bold mb-2">Account Locked</h1>
+        <p className="text-gray-400 text-sm mb-6 max-w-[280px]">Too many failed login attempts. Your account has been temporarily locked to protect your security.</p>
+        <p className="text-brand-error font-medium text-sm">Please try again in 15 minutes.</p>
+        <Button className="mt-8 w-full" variant="secondary" onClick={() => navigate('/login/reset-password')}>Reset Password</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 p-6 h-full">
       <h1 className="text-2xl font-bold mb-2">Enter your password</h1>
@@ -234,10 +271,24 @@ export function LoginPassword() {
         <button onClick={() => navigate(-1)} className="text-brand-primary">Edit</button>
       </div>
       
-      <Input type="password" placeholder="Password" value={pw} onChange={e => setPw(e.target.value)}/>
+      <div className="flex flex-col gap-2">
+        <Input 
+          type="password" 
+          placeholder="Password" 
+          value={pw} 
+          onChange={e => {
+            setPw(e.target.value);
+            setErrorMsg('');
+          }}
+          className={errorMsg ? 'border-brand-error focus:border-brand-error' : ''}
+        />
+        {errorMsg && <span className="text-brand-error text-xs font-medium">{errorMsg}</span>}
+      </div>
+      
       <Link to="/login/reset-password" className="text-brand-primary text-sm font-medium mt-4 select-none">Forgot Password?</Link>
       
-      <Button className="mt-8" disabled={!pw} onClick={() => navigate('/home')}>Confirm</Button>
+      <Button className="mt-8" disabled={!pw} onClick={handleLogin}>Log In</Button>
+      <p className="text-center text-xs text-gray-500 mt-4 px-4">Hint for demo: Correct password is <span className="text-white">password123</span>.</p>
     </div>
   );
 }

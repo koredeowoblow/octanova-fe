@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppWrapper, FlowLayout, MainLayout } from './components/layout';
 import React, { Suspense, lazy } from 'react';
+import { SecurityProvider } from './components/SecurityProvider';
 
 import './index.css';
 
@@ -35,7 +36,8 @@ const CreateWalletSeed = load(walletLoad, 'CreateWalletSeed');
 const WalletLoading = load(walletLoad, 'WalletLoading');
 
 const actionLoad = () => import('./pages/ActionFlow');
-const Receive = load(actionLoad, 'Receive');
+const ReceiveSelectCoin = load(actionLoad, 'ReceiveSelectCoin');
+const ReceiveQR = load(actionLoad, 'ReceiveQR');
 const SendSelectCoin = load(actionLoad, 'SendSelectCoin');
 const SendAddress = load(actionLoad, 'SendAddress');
 const SendAmount = load(actionLoad, 'SendAmount');
@@ -77,10 +79,11 @@ const BankTransferSuccess = load(bankLoad, 'BankTransferSuccess');
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route element={<AppWrapper />}>
-          
-          {/* Index Redirect */}
+      <SecurityProvider>
+        <Routes>
+          <Route element={<AppWrapper />}>
+            
+            {/* Index Redirect */}
           <Route path="/" element={<Navigate to="/signup/welcome" />} />
 
           {/* Auth Flow (No navbars) */}
@@ -133,7 +136,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/settings/profile" element={<FlowLayout title="Edit Profile"><EditProfile /></FlowLayout>} />
           <Route path="/settings/tokens" element={<FlowLayout title="Manage Tokens"><ManageTokens /></FlowLayout>} />
           
-          <Route path="/receive" element={<FlowLayout title="Receive"><Receive /></FlowLayout>} />
+          <Route path="/receive" element={<FlowLayout title="Select Coin"><ReceiveSelectCoin /></FlowLayout>} />
+          <Route path="/receive/qr" element={<FlowLayout title="Receive"><ReceiveQR /></FlowLayout>} />
           <Route path="/send" element={<FlowLayout title="Select Coin"><SendSelectCoin /></FlowLayout>} />
           <Route path="/send/address" element={<FlowLayout title="Send to Address"><SendAddress /></FlowLayout>} />
           <Route path="/send/amount" element={<FlowLayout title="Enter Amount"><SendAmount /></FlowLayout>} />
@@ -152,11 +156,12 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/notifications" element={<FlowLayout title="Notifications"><Notifications /></FlowLayout>} />
           
           <Route path="/wallet/create/face-id" element={<CreateWalletPassword />} />
-          <Route path="/wallet/create/seed" element={<FlowLayout><CreateWalletSeed /></FlowLayout>} />
-          <Route path="/wallet/create/loading" element={<WalletLoading />} />
-
-        </Route>
-      </Routes>
+            <Route path="/wallet/create/seed" element={<FlowLayout><CreateWalletSeed /></FlowLayout>} />
+            <Route path="/wallet/create/loading" element={<WalletLoading />} />
+  
+          </Route>
+        </Routes>
+      </SecurityProvider>
     </BrowserRouter>
   </StrictMode>,
 );
