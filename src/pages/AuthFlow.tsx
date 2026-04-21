@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useParams, Outlet } from 'react-router-dom';
-                                                                                                                                                                  import { Mail, Phone, Eye, EyeOff, Lock, CheckCircle2, Fingerprint, ScanFace } from 'lucide-react';
+import { Mail, Phone, Eye, EyeOff, Lock, CheckCircle2, Fingerprint, ScanFace } from 'lucide-react';
 import { Button, Input, Checkbox, OTPInput } from '../components/ui';
 import { Numpad } from '../components/Numpad';
 import { cn } from '../lib/utils';
