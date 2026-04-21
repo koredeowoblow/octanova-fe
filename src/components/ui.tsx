@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from '../lib/utils';
 import { Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { haptic } from '../lib/haptics';
 
 /* Buttons */
 export function Button({ variant = 'primary', size = 'default', isLoading, className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary'|'secondary'|'ghost', size?: 'default'|'sm', isLoading?: boolean }) {
@@ -15,7 +16,15 @@ export function Button({ variant = 'primary', size = 'default', isLoading, class
     sm: "h-10 text-sm"
   };
   return (
-    <button disabled={isLoading || props.disabled} className={cn("inline-flex items-center justify-center rounded-full font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none w-full", variants[variant], sizes[size], className)} {...props}>
+    <button
+      disabled={isLoading || props.disabled}
+      className={cn("inline-flex items-center justify-center rounded-full font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none w-full", variants[variant], sizes[size], className)}
+      {...props}
+      onClick={(e) => {
+        haptic.medium();
+        props.onClick?.(e);
+      }}
+    >
       {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : children}
     </button>
   );
@@ -63,6 +72,9 @@ export function OTPInput({ length = 6, value, onChange, isError }: { length?: nu
     newVal[index] = val.slice(-1);
     const result = newVal.join('');
     onChange(result);
+    if (val) {
+      haptic.light();
+    }
     if (val && index < length - 1) {
       document.getElementById(`otp-${index + 1}`)?.focus();
     }

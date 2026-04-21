@@ -5,11 +5,16 @@ import { Button, Input, OTPInput } from '../components/ui';
 import { BottomSheet } from '../components/BottomSheet';
 import { SkeletonLoader, ErrorState, EmptyState } from '../components/States';
 import { useP2PListings } from '../api/hooks/p2p';
+import { useAuthStore } from '../store/authStore';
+import { useUIStore } from '../store/uiStore';
+import { KYCUpgradePrompt, useKYCGate } from '../components/kyc';
 
 export function P2P() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<'buy'|'sell'>('buy');
   const [filterOpen, setFilterOpen] = useState(false);
+  const tier = useAuthStore((state) => state.user.kycTier);
+  const showKYCUpgrade = useUIStore((state) => state.showKYCUpgrade);
 
   const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useP2PListings({ type: tab });
   const sellers = data?.pages.flatMap(page => page.items) ?? [];
@@ -35,7 +40,18 @@ export function P2P() {
           <button onClick={() => navigate(-1)}><ArrowLeft className="w-6 h-6" /></button>
           <div className="flex bg-brand-card rounded-full p-1 border border-brand-border">
             <button className={`px-4 py-1.5 rounded-full text-sm font-medium ${tab === 'buy' ? 'bg-brand-primary text-white' : 'text-gray-400'}`} onClick={() => setTab('buy')}>Buy</button>
-            <button className={`px-4 py-1.5 rounded-full text-sm font-medium ${tab === 'sell' ? 'bg-red-500 text-white' : 'text-gray-400'}`} onClick={() => setTab('sell')}>Sell</button>
+            <button
+              className={`px-4 py-1.5 rounded-full text-sm font-medium ${tab === 'sell' ? 'bg-red-500 text-white' : 'text-gray-400'}`}
+              onClick={() => {
+                if (tier < 2) {
+                  showKYCUpgrade(2);
+                  return;
+                }
+                setTab('sell');
+              }}
+            >
+              Sell
+            </button>
           </div>
         </div>
         <button><Filter className="w-5 h-5" /></button>
@@ -125,9 +141,19 @@ function FilterPill({ label, onClick }: { label: string, onClick?: () => void })
 }
 
 export function P2PBuy() {
+  const { hasAccess } = useKYCGate(1);
+  if (!hasAccess) {
+    return <KYCUpgradePrompt requiredTier={1} />;
+  }
+
   const navigate = useNavigate();
   const [showOtp, setShowOtp] = useState(false);
   const [otp, setOtp] = useState('');
+  const [amount, setAmount] = useState('10000');
+  const tier = useAuthStore((state) => state.user.kycTier);
+  const showKYCUpgrade = useUIStore((state) => state.showKYCUpgrade);
+  const numericAmount = Number(amount.replace(/,/g, ''));
+  const overTierOneLimit = tier === 1 && numericAmount > 50000;
   
   const handleVerifyOTP = () => {
     // SECURITY: Simulated OTP validation API call for trade action
@@ -165,7 +191,7 @@ export function P2PBuy() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <Input label="You pay" placeholder="10,000" rightElement={<span className="text-brand-primary font-bold text-sm">NGN</span>} />
+        <Input label="You pay" placeholder="10,000" value={amount} onChange={(e) => setAmount(e.target.value)} rightElement={<span className="text-brand-primary font-bold text-sm">NGN</span>} />
         <Input label="You receive" placeholder="0.000071" rightElement={<span className="text-white font-bold text-sm">BTC</span>} />
         
         <div className="flex flex-col gap-1.5 mt-2">
@@ -177,16 +203,29 @@ export function P2PBuy() {
         </div>
       </div>
 
+      {overTierOneLimit && (
+        <div className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
+          <p className="text-sm text-amber-300">Upgrade your account to trade above ₦50,000</p>
+          <Button className="mt-3" onClick={() => showKYCUpgrade(2)}>Complete KYC</Button>
+        </div>
+      )}
+
       <div className="mt-8 mb-auto">
         <Link to="/p2p/seller" className="text-sm text-brand-primary flex items-center gap-1">Get more details about seller <ChevronDown className="w-4 h-4 -rotate-90" /></Link>
       </div>
 
-      <Button className="mt-auto" onClick={() => setShowOtp(true)}>Buy BTC with 0 fees</Button>
+      <Button className="mt-auto" disabled={overTierOneLimit} onClick={() => setShowOtp(true)}>Buy BTC with 0 fees</Button>
     </div>
   );
 }
 
 export function P2PSell() {
+  const { hasAccess } = useKYCGate(2);
+
+  if (!hasAccess) {
+    return <KYCUpgradePrompt requiredTier={2} />;
+  }
+
   const navigate = useNavigate();
   const [showOtp, setShowOtp] = useState(false);
   const [otp, setOtp] = useState('');

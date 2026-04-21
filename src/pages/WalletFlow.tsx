@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Copy, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { Button } from '../components/ui';
 import { cn } from '../lib/utils';
+import { useClipboard } from '../hooks/useClipboard';
+import { haptic } from '../lib/haptics';
 
 export function CreateWalletPassword() {
   const navigate = useNavigate();
@@ -19,20 +21,19 @@ export function CreateWalletPassword() {
 
 export function CreateWalletSeed() {
   const navigate = useNavigate();
+  const { copyWithAutoClear } = useClipboard();
   const seed = ["apple", "burger", "coffee", "dragon", "eagle", "falcon", "ghost", "hammer", "island", "jungle", "kangaroo", "lemon"];
   
   const [isRevealed, setIsRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(seed.join(' ')).then(() => {
-      setCopied(true);
-      // Security Requirement: Clear clipboard automatically after 60 seconds
-      setTimeout(() => {
-        navigator.clipboard.writeText('');
-        setCopied(false);
-      }, 60000);
-    });
+  const handleCopy = async () => {
+    await copyWithAutoClear(seed.join(' '), 60);
+    setCopied(true);
+    haptic.light();
+    setTimeout(() => {
+      setCopied(false);
+    }, 60000);
   };
 
   return (

@@ -3,8 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Search, ChevronRight, Copy, RefreshCw, CheckCircle2, Building2 } from 'lucide-react';
 import { Button, Input } from '../components/ui';
 import { Numpad } from '../components/Numpad';
+import { KYCUpgradePrompt, useKYCGate } from '../components/kyc';
 
 export function BankTransferSelectBank() {
+  const { hasAccess } = useKYCGate(2);
+  if (!hasAccess) {
+    return <KYCUpgradePrompt requiredTier={2} />;
+  }
+
   const navigate = useNavigate();
   const banks = [
     { name: 'Guaranty Trust Bank', code: 'GTB' },
@@ -35,6 +41,11 @@ export function BankTransferSelectBank() {
 }
 
 export function BankTransferAmount() {
+  const { hasAccess } = useKYCGate(2);
+  if (!hasAccess) {
+    return <KYCUpgradePrompt requiredTier={2} />;
+  }
+
   const navigate = useNavigate();
   const [amount, setAmount] = useState('0');
 
@@ -59,6 +70,11 @@ export function BankTransferAmount() {
 }
 
 export function BankTransferDetails() {
+  const { hasAccess } = useKYCGate(2);
+  if (!hasAccess) {
+    return <KYCUpgradePrompt requiredTier={2} />;
+  }
+
   const navigate = useNavigate();
 
   return (
@@ -103,6 +119,11 @@ export function BankTransferDetails() {
 }
 
 export function BankTransferProcessing() {
+  const { hasAccess } = useKYCGate(2);
+  if (!hasAccess) {
+    return <KYCUpgradePrompt requiredTier={2} />;
+  }
+
   const navigate = useNavigate();
   React.useEffect(() => {
     const t = setTimeout(() => navigate('/deposit/bank/success'), 3000);
@@ -121,6 +142,11 @@ export function BankTransferProcessing() {
 }
 
 export function BankTransferSuccess() {
+  const { hasAccess } = useKYCGate(2);
+  if (!hasAccess) {
+    return <KYCUpgradePrompt requiredTier={2} />;
+  }
+
   const navigate = useNavigate();
   return (
     <div className="flex flex-col flex-1 p-6 h-full items-center justify-center text-center">

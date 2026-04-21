@@ -6,6 +6,7 @@ import React, { Suspense, lazy } from 'react';
 import { SecurityProvider } from './components/SecurityProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { KYCGate } from './components/kyc';
 
 import './index.css';
 
@@ -35,6 +36,7 @@ const Signup = load(authLoad, 'Signup');
 const ConfirmEmail = load(authLoad, 'ConfirmEmail');
 const EmailVerified = load(authLoad, 'EmailVerified');
 const CreatePassword = load(authLoad, 'CreatePassword');
+const SignupBiometrics = load(authLoad, 'SignupBiometrics');
 const WelcomeAboard = load(authLoad, 'WelcomeAboard');
 const Login = load(authLoad, 'Login');
 const LoginPassword = load(authLoad, 'LoginPassword');
@@ -42,6 +44,12 @@ const LoginPassword = load(authLoad, 'LoginPassword');
 const homeLoad = () => import('./pages/Home');
 const Home = load(homeLoad, 'Home');
 const Deposit = load(homeLoad, 'Deposit');
+
+const cexLoad = () => import('./pages/CEXFlow');
+const DepositCrypto = load(cexLoad, 'DepositCrypto');
+const CardPurchase = load(cexLoad, 'CardPurchase');
+const OrdersHub = load(cexLoad, 'OrdersHub');
+const AdsHub = load(cexLoad, 'AdsHub');
 
 const p2pLoad = () => import('./pages/P2PFlow');
 const P2P = load(p2pLoad, 'P2P');
@@ -94,6 +102,19 @@ const BankTransferDetails = load(bankLoad, 'BankTransferDetails');
 const BankTransferProcessing = load(bankLoad, 'BankTransferProcessing');
 const BankTransferSuccess = load(bankLoad, 'BankTransferSuccess');
 
+const kycLoad = () => import('./pages/KYCFlow');
+const KYCOverview = load(kycLoad, 'KYCOverview');
+const KYCPhoneEntry = load(kycLoad, 'KYCPhoneEntry');
+const KYCPhoneVerify = load(kycLoad, 'KYCPhoneVerify');
+const KYCPhoneSuccess = load(kycLoad, 'KYCPhoneSuccess');
+const KYCDocumentsEntry = load(kycLoad, 'KYCDocumentsEntry');
+const KYCDocumentsCountry = load(kycLoad, 'KYCDocumentsCountry');
+const KYCDocumentsType = load(kycLoad, 'KYCDocumentsType');
+const KYCDocumentsBVN = load(kycLoad, 'KYCDocumentsBVN');
+const KYCDocumentsUpload = load(kycLoad, 'KYCDocumentsUpload');
+const KYCDocumentsFace = load(kycLoad, 'KYCDocumentsFace');
+const KYCDocumentsSuccess = load(kycLoad, 'KYCDocumentsSuccess');
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -111,6 +132,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/signup/confirm-email" element={<FlowLayout><ConfirmEmail /></FlowLayout>} />
           <Route path="/signup/email-verified" element={<EmailVerified />} />
           <Route path="/signup/create-password" element={<FlowLayout><CreatePassword /></FlowLayout>} />
+          <Route path="/signup/biometrics" element={<FlowLayout><SignupBiometrics /></FlowLayout>} />
           <Route path="/signup/welcome" element={<WelcomeAboard />} />
 
           <Route path="/login" element={<FlowLayout><Login /></FlowLayout>} />
@@ -119,28 +141,43 @@ createRoot(document.getElementById('root')!).render(
           {/* Main App flow (Bottom Nav) */}
           <Route element={<MainLayout />}>
             <Route path="/home" element={<Home />} />
-            <Route path="/p2p" element={<P2P />} />
-            <Route path="/orders" element={<div className="p-4 text-gray-400 text-center mt-20">Orders Coming Soon</div>} />
+            <Route path="/p2p" element={<KYCGate requiredTier={1}><P2P /></KYCGate>} />
+            <Route path="/orders" element={<KYCGate requiredTier={1}><OrdersHub /></KYCGate>} />
+            <Route path="/ads" element={<KYCGate requiredTier={2}><AdsHub /></KYCGate>} />
             <Route path="/settings" element={<SettingsHub />} />
           </Route>
 
           {/* Sub Flows with Top Nav only */}
           <Route path="/deposit" element={<FlowLayout title="Deposit"><Deposit /></FlowLayout>} />
+          <Route path="/deposit/crypto" element={<FlowLayout title="Deposit Crypto"><KYCGate requiredTier={1}><DepositCrypto /></KYCGate></FlowLayout>} />
+          <Route path="/deposit/card" element={<FlowLayout title="Buy with Card"><KYCGate requiredTier={2}><CardPurchase /></KYCGate></FlowLayout>} />
           
-          <Route path="/deposit/bank" element={<FlowLayout title="Select Bank"><BankTransferSelectBank /></FlowLayout>} />
-          <Route path="/deposit/bank/amount" element={<FlowLayout title="Deposit Amount"><BankTransferAmount /></FlowLayout>} />
-          <Route path="/deposit/bank/details" element={<FlowLayout title="Transfer Details"><BankTransferDetails /></FlowLayout>} />
-          <Route path="/deposit/bank/processing" element={<BankTransferProcessing />} />
-          <Route path="/deposit/bank/success" element={<BankTransferSuccess />} />
+          <Route path="/deposit/bank" element={<FlowLayout title="Select Bank"><KYCGate requiredTier={2}><BankTransferSelectBank /></KYCGate></FlowLayout>} />
+          <Route path="/deposit/bank/amount" element={<FlowLayout title="Deposit Amount"><KYCGate requiredTier={2}><BankTransferAmount /></KYCGate></FlowLayout>} />
+          <Route path="/deposit/bank/details" element={<FlowLayout title="Transfer Details"><KYCGate requiredTier={2}><BankTransferDetails /></KYCGate></FlowLayout>} />
+          <Route path="/deposit/bank/processing" element={<KYCGate requiredTier={2}><BankTransferProcessing /></KYCGate>} />
+          <Route path="/deposit/bank/success" element={<KYCGate requiredTier={2}><BankTransferSuccess /></KYCGate>} />
 
-          <Route path="/p2p/buy" element={<FlowLayout title="Buy BTC"><P2PBuy /></FlowLayout>} />
-          <Route path="/p2p/sell" element={<FlowLayout title="Sell BTC"><P2PSell /></FlowLayout>} />
+          <Route path="/p2p/buy" element={<FlowLayout title="Buy BTC"><KYCGate requiredTier={1}><P2PBuy /></KYCGate></FlowLayout>} />
+          <Route path="/p2p/sell" element={<FlowLayout title="Sell BTC"><KYCGate requiredTier={2}><P2PSell /></KYCGate></FlowLayout>} />
           <Route path="/p2p/transaction" element={
             <div className="flex flex-col items-center justify-center h-[100dvh]">
               <p>Transaction View Coming Soon</p>
               <button onClick={() => window.history.back()} className="mt-4 px-4 py-2 bg-brand-primary rounded-xl">Go Back</button>
             </div>
           } />
+
+          <Route path="/kyc" element={<FlowLayout title="KYC"><KYCOverview /></FlowLayout>} />
+          <Route path="/kyc/phone" element={<FlowLayout title="Phone Verification"><KYCPhoneEntry /></FlowLayout>} />
+          <Route path="/kyc/phone/verify" element={<FlowLayout title="Verify Phone"><KYCPhoneVerify /></FlowLayout>} />
+          <Route path="/kyc/phone/success" element={<FlowLayout title="Success"><KYCPhoneSuccess /></FlowLayout>} />
+          <Route path="/kyc/documents" element={<FlowLayout title="Document Verification"><KYCDocumentsEntry /></FlowLayout>} />
+          <Route path="/kyc/documents/country" element={<FlowLayout title="Country"><KYCDocumentsCountry /></FlowLayout>} />
+          <Route path="/kyc/documents/type" element={<FlowLayout title="Document Type"><KYCDocumentsType /></FlowLayout>} />
+          <Route path="/kyc/documents/bvn" element={<FlowLayout title="BVN"><KYCDocumentsBVN /></FlowLayout>} />
+          <Route path="/kyc/documents/upload" element={<FlowLayout title="Upload"><KYCDocumentsUpload /></FlowLayout>} />
+          <Route path="/kyc/documents/face" element={<FlowLayout title="Face Verification"><KYCDocumentsFace /></FlowLayout>} />
+          <Route path="/kyc/documents/success" element={<FlowLayout title="Success"><KYCDocumentsSuccess /></FlowLayout>} />
 
           <Route path="/settings/address-book" element={<FlowLayout title="Address Book"><AddressBook /></FlowLayout>} />
           <Route path="/settings/address-book/add" element={<FlowLayout title="Add Address"><AddressBookAdd /></FlowLayout>} />

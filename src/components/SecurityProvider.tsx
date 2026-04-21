@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
+import { useUIStore } from '../store/uiStore';
+import { useBiometrics } from '../hooks/useBiometrics';
+import { storage } from '../lib/storage';
 
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -19,6 +23,29 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const refreshUserFromAPI = useAuthStore((state) => state.refreshUserFromAPI);
+  const appLocked = useUIStore((state) => state.appLocked);
+  const setAppLocked = useUIStore((state) => state.setAppLocked);
+  const { checkAvailability, authenticate } = useBiometrics();
+
+  useEffect(() => {
+    if (appLocked) {
+      setIsLocked(true);
+    }
+  }, [appLocked]);
+
+  useEffect(() => {
+    refreshUserFromAPI();
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshUserFromAPI();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [refreshUserFromAPI]);
 
   // Reset timer on activity
   const resetTimer = () => {
@@ -54,6 +81,7 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
     // Basic mock logic. In a real app, this verifies a hash.
     if (pass === '1234') { // Mock password
       setIsLocked(false);
+      setAppLocked(false);
       setPassword('');
       setErrorMsg('');
       resetTimer();
@@ -65,6 +93,28 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
   };
+
+  const tryBiometricUnlock = async () => {
+    const biometricsEnabled = await storage.get('biometrics_enabled');
+    if (biometricsEnabled !== 'true') return;
+
+    const available = await checkAvailability();
+    if (!available) return;
+
+    const ok = await authenticate('Unlock OctaNova');
+    if (ok) {
+      setIsLocked(false);
+      setAppLocked(false);
+      setPassword('');
+      setErrorMsg('');
+      resetTimer();
+    }
+  };
+
+  useEffect(() => {
+    if (!isLocked) return;
+    tryBiometricUnlock();
+  }, [isLocked]);
 
   // If locked, render an overlay instead of standard content
   // We render the overlay ON TOP and hide children to ensure security, 
@@ -97,10 +147,18 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
           Unlock Session
         </button>
 
+        <button
+          className="mt-3 w-full max-w-sm bg-brand-card border border-brand-border text-white font-medium py-3 rounded-xl"
+          onClick={tryBiometricUnlock}
+        >
+          Unlock with Biometrics
+        </button>
+
         <button 
           className="mt-6 text-gray-500 font-medium text-sm"
           onClick={() => {
             setIsLocked(false);
+            setAppLocked(false);
             navigate('/login/password');
           }}
         >

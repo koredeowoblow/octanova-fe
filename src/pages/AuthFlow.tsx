@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useParams, Outlet } from 'react-router-dom';
-import { Mail, Phone, Eye, EyeOff, Lock, CheckCircle2 } from 'lucide-react';
+                                                                                                                                                                  import { Mail, Phone, Eye, EyeOff, Lock, CheckCircle2, Fingerprint, ScanFace } from 'lucide-react';
 import { Button, Input, Checkbox, OTPInput } from '../components/ui';
 import { Numpad } from '../components/Numpad';
 import { cn } from '../lib/utils';
+import { useBiometrics } from '../hooks/useBiometrics';
+import { storage } from '../lib/storage';
 
 /**
  * Layout to handle isolated screens without navbar.
@@ -165,7 +167,62 @@ export function CreatePassword() {
         ))}
       </div>
 
-      <Button disabled={!allMet} className="mt-auto" onClick={() => navigate('/signup/welcome')}>Next</Button>
+      <Button disabled={!allMet} className="mt-auto" onClick={() => navigate('/signup/biometrics')}>Next</Button>
+    </div>
+  );
+}
+
+export function SignupBiometrics() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [available, setAvailable] = useState(false);
+  const [biometryType, setBiometryType] = useState<string | null>(null);
+  const { checkAvailability, getBiometryType, authenticate } = useBiometrics();
+
+  React.useEffect(() => {
+    const init = async () => {
+      const canUse = await checkAvailability();
+      if (!canUse) {
+        navigate('/signup/welcome');
+        return;
+      }
+
+      const type = await getBiometryType();
+      setAvailable(true);
+      setBiometryType(String(type));
+      setLoading(false);
+    };
+
+    init();
+  }, [checkAvailability, getBiometryType, navigate]);
+
+  const setupBiometrics = async () => {
+    const ok = await authenticate('Enable biometric login for OctaNova');
+    if (ok) {
+      await storage.set('biometrics_enabled', 'true');
+    }
+    navigate('/signup/welcome');
+  };
+
+  if (loading) {
+    return <div className="flex flex-1 items-center justify-center">Preparing biometrics...</div>;
+  }
+
+  if (!available) {
+    return null;
+  }
+
+  const isFace = (biometryType ?? '').toLowerCase().includes('face');
+
+  return (
+    <div className="flex flex-col flex-1 p-6 h-full justify-center text-center">
+      <div className="w-20 h-20 bg-brand-card rounded-full mx-auto mb-6 flex items-center justify-center border border-brand-border">
+        {isFace ? <ScanFace className="w-10 h-10 text-brand-primary" /> : <Fingerprint className="w-10 h-10 text-brand-primary" />}
+      </div>
+      <h1 className="text-2xl font-bold mb-2">{isFace ? 'Set Up Face ID' : 'Set Up Touch ID'}</h1>
+      <p className="text-gray-400 mb-8">Use biometrics for quicker and safer access to your wallet.</p>
+      <Button onClick={setupBiometrics}>{isFace ? 'Set Up Face ID' : 'Set Up Touch ID'}</Button>
+      <Button variant="ghost" className="mt-3" onClick={() => navigate('/signup/welcome')}>Skip for now</Button>
     </div>
   );
 }

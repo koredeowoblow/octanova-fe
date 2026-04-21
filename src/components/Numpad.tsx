@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '../lib/utils';
 import { Delete } from 'lucide-react';
+import { haptic } from '../lib/haptics';
 
 interface NumpadProps {
   onPress: (val: string) => void;
@@ -18,13 +19,13 @@ export function Numpad({ onPress, onDelete, className, hasDecimal }: NumpadProps
         if (!digit) return <div key={i} />
         if (digit === 'del') {
           return (
-            <button key={i} onClick={onDelete} className="flex items-center justify-center p-4 active:bg-brand-card rounded-2xl transition-colors text-white">
+            <button key={i} onClick={() => { haptic.light(); onDelete(); }} className="flex items-center justify-center p-4 active:bg-brand-card rounded-2xl transition-colors text-white">
               <Delete className="w-6 h-6" />
             </button>
           )
         }
         return (
-          <button key={i} onClick={() => onPress(digit)} className="flex items-center justify-center p-4 active:bg-brand-card rounded-2xl transition-colors text-2xl font-medium text-white">
+          <button key={i} onClick={() => { haptic.light(); onPress(digit); }} className="flex items-center justify-center p-4 active:bg-brand-card rounded-2xl transition-colors text-2xl font-medium text-white">
             {digit}
           </button>
         )

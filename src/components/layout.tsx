@@ -5,6 +5,12 @@ import { cn } from "../lib/utils";
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../api/queryKeys';
 import { mockApi } from '../api/mockApi';
+import { KYCUpgradeBottomSheet } from './KYCUpgradeBottomSheet';
+import { NativeRuntimeBridge } from './NativeRuntimeBridge';
+import { useAuthStore } from '../store/authStore';
+import { useUIStore } from '../store/uiStore';
+import type { KYCTier } from '../store/authStore';
+import { useKeyboard } from '../hooks/useKeyboard';
 
 /** Base App Wrapper containing the mobile constraint and transition intercepts */
 export function AppWrapper() {
@@ -56,9 +62,11 @@ export function AppWrapper() {
       )}
 
       <div className="w-full max-w-[390px] h-full sm:h-[844px] bg-brand-bg text-white relative overflow-hidden sm:rounded-[40px] sm:border-[8px] sm:border-gray-900 shadow-2xl flex flex-col">
+        <NativeRuntimeBridge />
         <Suspense fallback={null}>
           <Outlet />
         </Suspense>
+        <KYCUpgradeBottomSheet />
       </div>
     </div>
   );
@@ -67,8 +75,9 @@ export function AppWrapper() {
 /** Standard screen layout with scrolling content */
 export function FlowLayout({ title, rightContent, children }: { title?: React.ReactNode, rightContent?: React.ReactNode, children: React.ReactNode }) {
   const navigate = useNavigate();
+  const { keyboardHeight, dismissKeyboard } = useKeyboard();
   return (
-    <div className="flex flex-col h-full bg-brand-bg">
+    <div className="flex flex-col h-full bg-brand-bg" onTouchStart={dismissKeyboard}>
       { title && (
         <header className="flex items-center justify-between px-4 py-4 shrink-0 bg-brand-bg relative z-10 border-b border-brand-border">
           <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-brand-card">
@@ -80,7 +89,7 @@ export function FlowLayout({ title, rightContent, children }: { title?: React.Re
           </div>
         </header>
       )}
-      <main className="flex-1 overflow-y-auto w-full relative">
+      <main className="flex-1 overflow-y-auto w-full relative" style={{ paddingBottom: keyboardHeight > 0 ? keyboardHeight : undefined }}>
         {children}
       </main>
     </div>
@@ -101,11 +110,13 @@ export function MainLayout() {
 
 export function BottomNavBar() {
   const queryClient = useQueryClient();
-  const nav = [
-    { label: "Home", path: "/home", icon: Home },
-    { label: "Orders", path: "/orders", icon: ShoppingBag },
-    { label: "Ads", path: "/p2p", icon: Megaphone },
-    { label: "Profile", path: "/settings", icon: User },
+  const userTier = useAuthStore((state) => state.user.kycTier);
+  const showKYCUpgrade = useUIStore((state) => state.showKYCUpgrade);
+  const nav: Array<{ label: string; path: string; icon: typeof Home; requiredTier: KYCTier }> = [
+    { label: "Home", path: "/home", icon: Home, requiredTier: 0 },
+    { label: "Orders", path: "/orders", icon: ShoppingBag, requiredTier: 1 },
+    { label: "Ads", path: "/ads", icon: Megaphone, requiredTier: 2 },
+    { label: "Profile", path: "/settings", icon: User, requiredTier: 0 },
   ];
   const { pathname } = useLocation();
 
@@ -121,14 +132,21 @@ export function BottomNavBar() {
   };
 
   return (
-    <div className="absolute bottom-0 left-0 w-full h-[80px] bg-[#0d0d0d] border-t border-brand-border flex items-center justify-around px-2 z-50">
+    <div className="bottom-tab-bar absolute bottom-0 left-0 w-full h-[80px] bg-[#0d0d0d] border-t border-brand-border flex items-center justify-around px-2 z-50">
       {nav.map((item) => {
         const isActive = pathname.startsWith(item.path);
         const Icon = item.icon;
         return (
           <Link 
             key={item.path} 
-            to={item.path} 
+            to={item.path}
+            onClick={(event) => {
+              if (userTier < item.requiredTier) {
+                event.preventDefault();
+                showKYCUpgrade(item.requiredTier);
+                return;
+              }
+            }}
             onMouseEnter={() => handleMouseEnter(item.path)}
             className="flex flex-col items-center justify-center p-2 gap-1 relative w-16"
           >

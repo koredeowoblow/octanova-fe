@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Scan, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, History, Search } from 'lucide-react';
+import { Bell, Scan, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, History, Lock, ShieldCheck } from 'lucide-react';
 import { Button } from '../components/ui';
 import { cn } from '../lib/utils';
+import { useAuthStore } from '../store/authStore';
+import { useUIStore } from '../store/uiStore';
 
 export function Home() {
   const navigate = useNavigate();
-  const [kycmissing] = useState(true);
+  const tier = useAuthStore((state) => state.user.kycTier);
 
   const tokens = [
     { symbol: 'BTC', name: 'Bitcoin', bg: 'bg-[#F7931A]', network: 'Bitcoin', balance: '0.00', value: '$0.00' },
@@ -45,18 +47,18 @@ export function Home() {
         </div>
 
         {/* KYC Banner */}
-        {kycmissing && (
+        {tier < 2 && (
           <div className="bg-brand-card border border-brand-border rounded-2xl p-4 mb-6 relative overflow-hidden flex flex-col gap-3 object-cover">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full bg-brand-primary"></div>
-              <div className="w-2 h-2 rounded-full bg-brand-border-visible"></div>
-              <div className="w-2 h-2 rounded-full bg-brand-border-visible"></div>
+            <div className="flex items-center gap-3 mb-2">
+              <StepDot label="Phone number" active={tier === 0} done={tier >= 1} />
+              <StepDot label="Documents" active={tier === 1} done={tier >= 2} />
+              <StepDot label="Account" active={false} done={tier >= 2} />
             </div>
             <div>
-              <h3 className="font-semibold mb-1">Verify phone number and earn points.</h3>
-              <p className="text-xs text-gray-400">Complete KYC to start trading securely</p>
+              <h3 className="font-semibold mb-1">{tier === 0 ? 'Verify phone number and earn points.' : 'Verify documents and earn points.'}</h3>
+              <p className="text-xs text-gray-400">{tier === 0 ? 'Unlock P2P trading and crypto deposits.' : 'Unlock bank transfer, cards, and full P2P access.'}</p>
             </div>
-            <Button size="sm" className="w-max px-6 mt-2" onClick={() => navigate('/kyc')}>Verify Now</Button>
+            <Button size="sm" className="w-max px-6 mt-2" onClick={() => navigate(tier === 0 ? '/kyc/phone' : '/kyc/documents')}>Verify Now</Button>
           </div>
         )}
 
@@ -110,6 +112,17 @@ function ActionBtn({ icon, label, onClick }: { icon: React.ReactNode, label: str
 
 export function Deposit() {
   const navigate = useNavigate();
+  const tier = useAuthStore((state) => state.user.kycTier);
+  const showKYCUpgrade = useUIStore((state) => state.showKYCUpgrade);
+
+  const handleDepositClick = (requiredTier: 0 | 1 | 2, route: string) => {
+    if (tier < requiredTier) {
+      showKYCUpgrade(requiredTier);
+      return;
+    }
+    navigate(route);
+  };
+
   return (
     <div className="flex flex-col flex-1 p-4">
       <h1 className="text-2xl font-bold mb-6">Deposit</h1>
@@ -117,40 +130,60 @@ export function Deposit() {
         <DepositOption 
           title="Deposit crypto" 
           desc="Add crypto funds to your OctaNova account setup" 
-          onClick={() => navigate('/deposit/crypto')}
+          locked={tier < 1}
+          onClick={() => handleDepositClick(1, '/deposit/crypto')}
         />
         <DepositOption 
           title="Buy with credit/debit card" 
           desc="Enjoy 0 fees via Visa, Mastercard, Google Pay and Apple Pay every Friday" 
-          onClick={() => navigate('/deposit/card')}
+          locked={tier < 2}
+          onClick={() => handleDepositClick(2, '/deposit/card')}
         />
         <DepositOption 
           title="P2P trading" 
           desc="Buy crypto from others and enjoy rewards on Octanova" 
-          onClick={() => navigate('/p2p')}
+          locked={tier < 1}
+          onClick={() => handleDepositClick(1, '/p2p')}
         />
         <DepositOption 
           title="Bank transfer" 
           badge="New"
           desc="Buy crypto via bank transfer seamlessly from your bank app" 
-          onClick={() => navigate('/deposit/bank')}
+          locked={tier < 2}
+          onClick={() => handleDepositClick(2, '/deposit/bank')}
         />
       </div>
     </div>
   );
 }
 
-function DepositOption({ title, desc, badge, onClick }: any) {
+function DepositOption({ title, desc, badge, onClick, locked }: { title: string; desc: string; badge?: string; onClick: () => void; locked?: boolean }) {
   return (
     <div className="bg-brand-card border border-brand-border rounded-2xl p-4 flex justify-between items-center cursor-pointer hover:bg-brand-border-visible transition-colors" onClick={onClick}>
       <div className="flex flex-col gap-1 pr-4">
         <div className="flex gap-2 items-center">
           <span className="font-semibold text-[15px]">{title}</span>
           {badge && <span className="text-[10px] bg-brand-primary text-white px-2 py-0.5 rounded-full">{badge}</span>}
+          {locked && (
+            <span className="inline-flex items-center gap-1 text-[10px] text-amber-400 bg-amber-500/10 border border-amber-400/30 px-2 py-0.5 rounded-full">
+              <Lock className="w-3 h-3" /> Locked
+            </span>
+          )}
         </div>
         <p className="text-[12px] text-gray-500 tracking-tight leading-4">{desc}</p>
       </div>
       <ArrowUpRight className="text-brand-primary w-5 h-5 shrink-0" />
     </div>
   )
+}
+
+function StepDot({ label, active, done }: { label: string; active?: boolean; done?: boolean }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className={cn('w-5 h-5 rounded-full border flex items-center justify-center', done ? 'border-brand-success bg-brand-success/20' : active ? 'border-brand-primary bg-brand-primary/20' : 'border-brand-border-visible bg-brand-card')}>
+        {done ? <ShieldCheck className="w-3 h-3 text-brand-success" /> : <div className={cn('w-2 h-2 rounded-full', active ? 'bg-brand-primary' : 'bg-brand-border-visible')} />}
+      </div>
+      <span className={cn('text-[10px]', active || done ? 'text-white' : 'text-gray-500')}>{label}</span>
+    </div>
+  );
 }
